@@ -34,7 +34,7 @@ const expectedChart2MusicType = (exampleType: string) => {
 };
 
 describe("demo chart examples", () => {
-  it("loads the demo examples from the gallery page", () => {
+  it("loads the demo examples from the shared Storybook fixture", () => {
     expect(optionsByType.length).toBeGreaterThan(40);
     expect(supportedExamples.length).toBeGreaterThan(25);
     expect(adapterUnsupportedExamples.length).toBeGreaterThan(10);

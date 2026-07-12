@@ -117,10 +117,9 @@ pnpm run build
 
 ## Examples
 
-- `examples/basic.html` shows one connected bar chart.
-- `examples/all-chart-types.html` renders every chart type exported by ECharts 5.6 and labels the chart types currently supported by the Chart2Music adapter.
+- Storybook contains the connected basic bar chart and the full ECharts gallery, grouped into chart-type stories. Each example is rendered with its Chart2Music control area.
 
-Run `pnpm run build` first, then serve the repo root with any static file server and open the example HTML files.
+Run `pnpm dev` and open the Storybook URL it reports. Build the static Storybook site with `pnpm run build-storybook`.
 
 ## Publishing
 

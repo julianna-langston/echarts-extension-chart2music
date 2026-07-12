@@ -1,0 +1,37 @@
+:root {
+  color: #1e293b;
+  background: #f8fafc;
+  font-family: system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+.c2m-gallery {
+  margin: 0 auto;
+  max-width: 1500px;
+  padding: 24px;
+}
+
+.c2m-gallery-header { margin-bottom: 24px; }
+.c2m-gallery-header h1 { margin: 0 0 8px; font-size: 28px; }
+.c2m-gallery-header p { margin: 0; max-width: 780px; color: #475569; }
+
+.c2m-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.c2m-panel { min-width: 0; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; overflow: hidden; }
+.c2m-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; }
+.c2m-panel-header h2 { margin: 0; font-size: 16px; font-weight: 650; }
+.c2m-badge { flex: 0 0 auto; padding: 3px 7px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.is-supported { color: #065f46; background: #d1fae5; }
+.is-visual { color: #9a3412; background: #ffedd5; }
+.c2m-chart { width: 100%; height: 320px; }
+.c2m-caption { min-height: 28px; padding: 8px 14px; border-top: 1px solid #e2e8f0; color: #475569; font-size: 13px; }
+
+@media (max-width: 420px) {
+  .c2m-gallery { padding: 12px; }
+  .c2m-grid { grid-template-columns: minmax(0, 1fr); }
+}
