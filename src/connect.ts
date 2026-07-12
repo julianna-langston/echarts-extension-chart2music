@@ -208,12 +208,16 @@ const isHierarchySeries = (seriesItem: Record<string, unknown> | undefined) => {
   return seriesItem?.type === "sunburst" || seriesItem?.type === "tree" || seriesItem?.type === "treemap";
 };
 
-const highlightCurrentPoint = (chart: EChartsType, c2m: EChartsChart2MusicConnection["c2m"]) => {
+const highlightCurrentPoint = (
+  chart: EChartsType,
+  c2m: EChartsChart2MusicConnection["c2m"],
+  previousPointKey?: string
+) => {
   const current = c2m.getCurrent();
   const custom = current.point?.custom;
 
   if (!custom || typeof custom !== "object") {
-    return;
+    return previousPointKey;
   }
 
   const { seriesIndex, dataIndex, name } = custom as {
@@ -222,7 +226,7 @@ const highlightCurrentPoint = (chart: EChartsType, c2m: EChartsChart2MusicConnec
     name?: string;
   };
   if (seriesIndex === undefined || dataIndex === undefined) {
-    return;
+    return previousPointKey;
   }
   const seriesItem = getSeriesItem(chart, seriesIndex);
   const hierarchyNode =
@@ -233,6 +237,11 @@ const highlightCurrentPoint = (chart: EChartsType, c2m: EChartsChart2MusicConnec
       : name
         ? { name }
         : { dataIndex };
+  const pointKey = `${current.group}:${seriesIndex}:${"dataIndex" in target ? target.dataIndex : target.name}`;
+
+  if (pointKey === previousPointKey) {
+    return pointKey;
+  }
 
   chart.dispatchAction({
     type: "downplay",
@@ -248,6 +257,7 @@ const highlightCurrentPoint = (chart: EChartsType, c2m: EChartsChart2MusicConnec
     seriesIndex,
     ...target
   });
+  return pointKey;
 };
 
 const findNodeByName = (node: EChartsTreeNode | undefined, name: string): EChartsTreeNode | null => {
@@ -316,12 +326,17 @@ export const createEChartsMusic = (
   config.element = chart.getDom();
   config.cc = makeCCElement(chart, options.cc);
   const userOnFocusCallback = config.options?.onFocusCallback;
+  let lastHighlightedPointKey: string | undefined;
   config.options = {
     ...config.options,
     onFocusCallback: (point) => {
       if (connection) {
         syncTreemapViewRoot(chart, connection.c2m);
-        highlightCurrentPoint(chart, connection.c2m);
+        lastHighlightedPointKey = highlightCurrentPoint(
+          chart,
+          connection.c2m,
+          lastHighlightedPointKey
+        );
       }
       userOnFocusCallback?.(point);
     }

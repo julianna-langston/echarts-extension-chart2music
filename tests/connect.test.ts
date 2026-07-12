@@ -436,6 +436,46 @@ describe("connect", () => {
     expect(onFocusCallback).toHaveBeenCalledWith(callbackPoint);
   });
 
+  it("does not move the ECharts tooltip when Chart2Music changes boxplot statistics", () => {
+    const cc = makeElement();
+    const callbackPoint = {
+      point: {
+        x: 0,
+        low: 4,
+        q1: 7,
+        median: 10,
+        q3: 14,
+        high: 18,
+        custom: {
+          seriesIndex: 0,
+          dataIndex: 0
+        }
+      }
+    };
+    const chart = makeChart({
+      xAxis: { data: ["A"] },
+      series: [{ type: "boxplot", data: [[4, 7, 10, 14, 18]] }]
+    });
+    chart2MusicMock.c2m.getCurrent.mockReturnValue({
+      group: "Series 1",
+      point: callbackPoint.point
+    });
+
+    connect(chart as unknown as Parameters<typeof connect>[0], { cc });
+    const config = chart2MusicMock.c2mChart.mock.calls[0]?.[0] as {
+      options?: { onFocusCallback?: (point: typeof callbackPoint) => void };
+    };
+    config.options?.onFocusCallback?.(callbackPoint);
+    config.options?.onFocusCallback?.(callbackPoint);
+
+    expect(chart.dispatchAction).toHaveBeenCalledTimes(3);
+    expect(chart.dispatchAction).toHaveBeenLastCalledWith({
+      type: "showTip",
+      seriesIndex: 0,
+      dataIndex: 0
+    });
+  });
+
   it("disposes Chart2Music and detaches the ECharts finished listener", () => {
     const cc = makeElement();
     const chart = makeChart({
