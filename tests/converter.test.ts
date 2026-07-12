@@ -197,7 +197,7 @@ describe("echartsOptionToChart2MusicConfig", () => {
     expect(config?.options?.stack).toBe(true);
   });
 
-  it("does not enable Chart2Music stacking for floating bar helper series", () => {
+  it("converts floating bars into low and high values without Chart2Music stacking", () => {
     const config = echartsOptionToChart2MusicConfig({
       xAxis: { data: ["A", "B"] },
       series: [
@@ -214,6 +214,10 @@ describe("echartsOptionToChart2MusicConfig", () => {
 
     expect(config?.type).toBe("bar");
     expect(config?.options?.stack).toBeUndefined();
+    expect(config?.data).toEqual([
+      { x: 0, low: 3, high: 11, custom: { seriesIndex: 1, dataIndex: 0 } },
+      { x: 1, low: 5, high: 15, custom: { seriesIndex: 1, dataIndex: 1 } }
+    ]);
   });
 
   it("uses pie data item names as x-axis labels", () => {

@@ -130,11 +130,19 @@ describe("demo chart examples", () => {
     expect(smoothLine && echartsOptionToChart2MusicConfig(smoothLine.option)?.axes?.x?.label).toBe("Month");
   });
 
-  it("does not configure Chart2Music stacking for demo floating bars", () => {
+  it("represents demo floating bars as low and high ranges without Chart2Music stacking", () => {
     const floatingRange = supportedExamples.find((example) => example.title === "bar: floating range");
     const stacked = supportedExamples.find((example) => example.title === "bar: stacked");
 
     expect(floatingRange && echartsOptionToChart2MusicConfig(floatingRange.option)?.options?.stack).toBeUndefined();
     expect(stacked && echartsOptionToChart2MusicConfig(stacked.option)?.options?.stack).toBe(true);
+    expect(floatingRange && echartsOptionToChart2MusicConfig(floatingRange.option)?.data).toEqual([
+      { x: 0, low: 3, high: 11, custom: { seriesIndex: 1, dataIndex: 0 } },
+      { x: 1, low: 5, high: 15, custom: { seriesIndex: 1, dataIndex: 1 } },
+      { x: 2, low: 2, high: 8, custom: { seriesIndex: 1, dataIndex: 2 } },
+      { x: 3, low: 8, high: 19, custom: { seriesIndex: 1, dataIndex: 3 } },
+      { x: 4, low: 6, high: 13, custom: { seriesIndex: 1, dataIndex: 4 } },
+      { x: 5, low: 9, high: 22, custom: { seriesIndex: 1, dataIndex: 5 } }
+    ]);
   });
 });

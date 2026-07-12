@@ -42,9 +42,20 @@ export type EChartsMusicPoint = {
 
 export type EChartsMusicDataPoint =
   | EChartsMusicPoint
+  | EChartsMusicRangePoint
   | EChartsMusicBoxPoint
   | EChartsMusicCandlestickPoint
   | EChartsMusicMatrixPoint;
+
+export type EChartsMusicRangePoint = {
+  x: number;
+  high: number;
+  low: number;
+  custom: {
+    seriesIndex: number;
+    dataIndex: number;
+  };
+};
 
 export type EChartsMusicBoxPoint = {
   x: number;

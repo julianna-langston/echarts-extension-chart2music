@@ -5,7 +5,8 @@ import type {
   EChartsMusicCandlestickPoint,
   EChartsMusicGroupData,
   EChartsMusicMatrixPoint,
-  EChartsMusicPoint
+  EChartsMusicPoint,
+  EChartsMusicRangePoint
 } from "./types.js";
 
 type C2MSeriesType = Exclude<NonNullable<C2MChartConfig["type"]>, unknown[]>;
@@ -448,6 +449,51 @@ const isStackedBar = (series: Record<string, unknown>[], indexes: number[]) => {
   });
 
   return [...stacks.values()].some((count) => count > 1);
+};
+
+const floatingBarHelper = (
+  series: Record<string, unknown>[],
+  seriesIndex: number
+) => {
+  const item = series[seriesIndex];
+  const stack = item?.stack;
+  const hasStack = (typeof stack === "string" && stack.length > 0) || typeof stack === "number";
+
+  if (!item || item.type !== "bar" || !isVisibleSeries(item) || !hasStack) {
+    return undefined;
+  }
+
+  return series.find((candidate, candidateIndex) =>
+    candidateIndex !== seriesIndex &&
+    candidate?.type === "bar" &&
+    candidate.stack === stack &&
+    !isVisibleSeries(candidate)
+  );
+};
+
+const readFloatingBarPoint = (
+  raw: unknown,
+  offset: unknown,
+  dataIndex: number,
+  seriesIndex: number
+): EChartsMusicRangePoint | null => {
+  const start = getNumericY(offset);
+  const extent = getNumericY(raw);
+
+  if (start === null || extent === null) {
+    return null;
+  }
+
+  const end = start + extent;
+  return {
+    x: dataIndex,
+    low: Math.min(start, end),
+    high: Math.max(start, end),
+    custom: {
+      seriesIndex,
+      dataIndex
+    }
+  };
 };
 
 const createHierarchyData = (
@@ -1060,6 +1106,20 @@ export const echartsOptionToChart2MusicConfig = (
   indexes.forEach((seriesIndex) => {
     const item = series[seriesIndex];
     const data = Array.isArray(item?.data) ? item.data : [];
+    const helper = floatingBarHelper(series, seriesIndex);
+
+    if (item?.type === "bar" && !isVisibleSeries(item)) {
+      return;
+    }
+
+    if (helper) {
+      const offsets = Array.isArray(helper.data) ? helper.data : [];
+      groups[seriesName(item ?? {}, seriesIndex)] = data
+        .map((raw, dataIndex) => readFloatingBarPoint(raw, offsets[dataIndex], dataIndex, seriesIndex))
+        .filter((point): point is EChartsMusicRangePoint => point !== null);
+      return;
+    }
+
     groups[seriesName(item ?? {}, seriesIndex)] = data
       .map((raw, dataIndex) =>
         readDataPoint(
@@ -1073,7 +1133,8 @@ export const echartsOptionToChart2MusicConfig = (
       .filter((point): point is EChartsMusicPoint => point !== null);
   });
 
-  const data = indexes.length === 1 ? Object.values(groups)[0] ?? [] : groups;
+  const groupValues = Object.values(groups);
+  const data = groupValues.length === 1 ? groupValues[0] ?? [] : groups;
   const info = createMarkInfo(series, indexes, labels);
   const c2mOptions = {
     ...options.options,
