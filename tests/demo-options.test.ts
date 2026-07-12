@@ -124,6 +124,12 @@ describe("demo chart examples", () => {
     ]);
   });
 
+  it("exposes the visually hidden Month axis name to Chart2Music", () => {
+    const smoothLine = supportedExamples.find((example) => example.title === "line: smooth");
+
+    expect(smoothLine && echartsOptionToChart2MusicConfig(smoothLine.option)?.axes?.x?.label).toBe("Month");
+  });
+
   it("does not configure Chart2Music stacking for demo floating bars", () => {
     const floatingRange = supportedExamples.find((example) => example.title === "bar: floating range");
     const stacked = supportedExamples.find((example) => example.title === "bar: stacked");

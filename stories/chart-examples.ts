@@ -14,7 +14,7 @@ export const supportedByChart2Music = new Set(["bar", "boxplot", "candlestick", 
       const cartesianGrid = { top: 24, right: 18, bottom: 24, left: 14, containLabel: true };
       const lineAxis = {
         grid: cartesianGrid,
-        xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+        xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
         yAxis: { type: "value" }
       };
       export const regionMap = {
@@ -162,7 +162,7 @@ export const optionsByType = [
           title: "bar: basic",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [{ name: "Revenue", type: "bar", data: values }]
           }
@@ -173,7 +173,7 @@ export const optionsByType = [
           option: {
             grid: { ...cartesianGrid, top: 42 },
             legend: { top: 0, right: 8 },
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               { name: "North", type: "bar", data: [12, 18, 15, 20, 17, 23] },
@@ -188,7 +188,7 @@ export const optionsByType = [
           option: {
             grid: { ...cartesianGrid, top: 42 },
             legend: { top: 0, right: 8 },
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               { name: "Email", type: "bar", stack: "Total", data: [6, 8, 9, 12, 10, 14] },
@@ -202,7 +202,7 @@ export const optionsByType = [
           title: "bar: floating range",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {
@@ -254,7 +254,7 @@ export const optionsByType = [
           option: {
             grid: { ...cartesianGrid, top: 42 },
             legend: { top: 0, right: 8 },
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: [
               { type: "value", name: "Sales" },
               { type: "value", name: "Rate" }
@@ -270,7 +270,7 @@ export const optionsByType = [
           title: "bar: data labels",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {
@@ -297,7 +297,7 @@ export const optionsByType = [
           title: "bar: negative values",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {
@@ -316,7 +316,7 @@ export const optionsByType = [
           title: "bar: background",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {

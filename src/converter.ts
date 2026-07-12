@@ -337,6 +337,13 @@ const getAxisCategoryLabels = (
     .map((value) => String(value));
 };
 
+const getAxisName = (
+  axis: Record<string, unknown> | Record<string, unknown>[] | undefined
+): string | undefined => {
+  const name = asArray(axis)[0]?.name;
+  return typeof name === "string" && name ? name : undefined;
+};
+
 const getCategoryLabels = (option: Record<string, unknown>): string[] => {
   return getAxisCategoryLabels(option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined);
 };
@@ -1026,6 +1033,9 @@ export const echartsOptionToChart2MusicConfig = (
   }
 
   const categoryLabels = getCategoryLabels(option);
+  const xAxisName = getAxisName(
+    option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
+  );
   const pieLabels =
     inferredType === "pie" && indexes.length === 1
       ? getDataItemNameLabels(firstSelectedSeries)
@@ -1059,14 +1069,15 @@ export const echartsOptionToChart2MusicConfig = (
   const axes = {
     x: {
       ...(labels.length ? { valueLabels: labels } : {}),
+      ...(xAxisName ? { label: xAxisName } : {}),
       ...options.axes?.x
-      },
-      y: {
-        format: (value: number) => value.toLocaleString(),
-        ...options.axes?.y
-      },
-      ...(options.axes?.y2 ? { y2: options.axes.y2 } : {})
-    };
+    },
+    y: {
+      format: (value: number) => value.toLocaleString(),
+      ...options.axes?.y
+    },
+    ...(options.axes?.y2 ? { y2: options.axes.y2 } : {})
+  };
   const mergedInfo = mergeInfo(options.info, info);
 
   return {
