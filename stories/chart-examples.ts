@@ -486,23 +486,6 @@ export const optionsByType = [
         },
         {
           type: "scatter",
-          title: "scatter: bubble",
-          option: {
-            grid: cartesianGrid,
-            xAxis: {},
-            yAxis: {},
-            series: [
-              {
-                name: "Bubble samples",
-                type: "scatter",
-                symbolSize: (data) => Math.max(8, data[2] * 1.6),
-                data: [[1, 8, 5], [2, 12, 14], [3, 9, 8], [4, 18, 22], [5, 16, 16], [6, 23, 28]]
-              }
-            ]
-          }
-        },
-        {
-          type: "scatter",
           title: "scatter: categories",
           option: {
             grid: { ...cartesianGrid, top: 42 },

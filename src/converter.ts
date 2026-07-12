@@ -26,6 +26,12 @@ const echartsToC2MType: Record<string, C2MSeriesType> = {
   treemap: "treemap"
 };
 
+const isBubbleSeries = (series: Record<string, unknown> | undefined) => {
+  return series?.type === "scatter" &&
+    series.coordinateSystem === undefined &&
+    typeof series.symbolSize === "function";
+};
+
 const asArray = <T>(value: T | T[] | undefined): T[] => {
   if (value === undefined) {
     return [];
@@ -866,6 +872,13 @@ export const echartsOptionToChart2MusicConfig = (
   if (unsupportedType?.type) {
     options.errorCallback?.(
       `Unable to connect chart2music to ECharts: series type "${unsupportedType.type}" is not supported. Supported types are ${Object.keys(echartsToC2MType).join(", ")}.`
+    );
+    return null;
+  }
+
+  if (indexes.some((index) => isBubbleSeries(series[index]))) {
+    options.errorCallback?.(
+      "Unable to connect chart2music to ECharts: bubble plots are not supported."
     );
     return null;
   }

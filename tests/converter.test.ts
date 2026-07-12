@@ -950,4 +950,25 @@ describe("echartsOptionToChart2MusicConfig", () => {
     expect(config).toBeNull();
     expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("radar"));
   });
+
+  it("rejects bubble plots without changing the ECharts chart", () => {
+    const errorCallback = vi.fn();
+    const config = echartsOptionToChart2MusicConfig(
+      {
+        xAxis: {},
+        yAxis: {},
+        series: [
+          {
+            type: "scatter",
+            symbolSize: (point: number[]) => point[2],
+            data: [[1, 8, 5], [2, 12, 14]]
+          }
+        ]
+      },
+      { errorCallback }
+    );
+
+    expect(config).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("bubble plots are not supported"));
+  });
 });
