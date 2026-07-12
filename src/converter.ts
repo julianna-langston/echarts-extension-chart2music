@@ -831,11 +831,146 @@ const getHeatmapValue = (value: unknown): number | null => {
   return typeof value === "number" ? value : null;
 };
 
+const calendarDate = (value: unknown): Date | null => {
+  if (typeof value !== "string" && typeof value !== "number") {
+    return null;
+  }
+
+  const match = typeof value === "string" && /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value);
+  const date = match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const addCalendarDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const calendarRange = (calendar: Record<string, unknown>, rawData: unknown[]) => {
+  const range = calendar.range;
+  const values = Array.isArray(range) ? range : range === undefined ? [] : [range];
+  const start = calendarDate(values[0]);
+  const end = calendarDate(values[1] ?? values[0]);
+
+  if (start && end) {
+    if (typeof values[0] === "string" && /^\d{4}$/.test(values[0])) {
+      return { start, end: new Date(start.getFullYear(), 11, 31) };
+    }
+    if (typeof values[0] === "string" && /^\d{4}-\d{1,2}$/.test(values[0])) {
+      return { start, end: new Date(start.getFullYear(), start.getMonth() + 1, 0) };
+    }
+    return start <= end ? { start, end } : { start: end, end: start };
+  }
+
+  const dates = rawData
+    .map(readHeatmapValue)
+    .map((values) => calendarDate(values?.[0]))
+    .filter((date): date is Date => date !== null)
+    .sort((a, b) => a.getTime() - b.getTime());
+  const first = dates[0];
+  const last = dates[dates.length - 1];
+  return first && last ? { start: first, end: last } : null;
+};
+
+const calendarWeekLabel = (date: Date) => {
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  return `Week of ${month} ${date.getDate()}`;
+};
+
+const createCalendarHeatmapData = (
+  option: Record<string, unknown>,
+  series: Record<string, unknown>[],
+  indexes: number[]
+) => {
+  const calendarIndexes = indexes.filter((index) => series[index]?.coordinateSystem === "calendar");
+  const firstIndex = calendarIndexes[0];
+  const firstSeries = firstIndex === undefined ? undefined : series[firstIndex];
+  const firstData = Array.isArray(firstSeries?.data) ? firstSeries.data : [];
+  const calendarOptions = asArray(option.calendar as Record<string, unknown> | Record<string, unknown>[]);
+  const calendarIndex = typeof firstSeries?.calendarIndex === "number" ? firstSeries.calendarIndex : 0;
+  const calendar = calendarOptions[calendarIndex] ?? {};
+  const range = calendarRange(calendar, firstData);
+
+  if (!range) {
+    return null;
+  }
+
+  const dayLabel = calendar.dayLabel as Record<string, unknown> | undefined;
+  const firstDay = typeof dayLabel?.firstDay === "number" ? dayLabel.firstDay : 0;
+  const orient = calendar.orient === "vertical" ? "vertical" : "horizontal";
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const orderedDays = Array.from({ length: 7 }, (_item, index) => dayNames[(firstDay + index) % 7] ?? String(index));
+  const startDay = (range.start.getDay() + 7 - firstDay) % 7;
+  const dayCount = Math.floor((range.end.getTime() - range.start.getTime()) / 86_400_000) + 1;
+  const weekCount = Math.floor((dayCount + startDay + 6) / 7);
+  const firstWeekStart = addCalendarDays(range.start, -startDay);
+  const weekLabels = Array.from({ length: weekCount }, (_item, index) =>
+    calendarWeekLabel(addCalendarDays(firstWeekStart, index * 7))
+  );
+  const multipleSeries = calendarIndexes.length > 1;
+  const groups: Record<string, EChartsMusicMatrixPoint[]> = {};
+  const labels = orient === "horizontal" ? weekLabels : orderedDays;
+
+  calendarIndexes.forEach((seriesIndex) => {
+    const item = series[seriesIndex];
+    const rawData = Array.isArray(item?.data) ? item.data : [];
+    const baseName = seriesName(item ?? {}, seriesIndex);
+    const rowLabels = orient === "horizontal" ? orderedDays : weekLabels;
+    const columnCount = labels.length;
+
+    rowLabels.forEach((rowLabel) => {
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      groups[groupName] = Array.from({ length: columnCount }, (_item, x) => ({
+        x,
+        y2: Number.NaN,
+        custom: { seriesIndex }
+      }));
+    });
+
+    rawData.forEach((raw, dataIndex) => {
+      const values = readHeatmapValue(raw);
+      const date = calendarDate(values?.[0]);
+      const value = getHeatmapValue(values?.[1]);
+      if (!date || value === null || date < range.start || date > range.end) {
+        return;
+      }
+
+      const daysFromStart = Math.floor((date.getTime() - range.start.getTime()) / 86_400_000);
+      const week = Math.floor((daysFromStart + startDay) / 7);
+      const day = (date.getDay() + 7 - firstDay) % 7;
+      const rowLabel = orient === "horizontal" ? orderedDays[day] : weekLabels[week];
+      const x = orient === "horizontal" ? week : day;
+      if (rowLabel === undefined || x < 0 || x >= columnCount) {
+        return;
+      }
+
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      groups[groupName]![x] = {
+        x,
+        y2: value,
+        custom: { seriesIndex, dataIndex }
+      };
+    });
+  });
+
+  return { data: groups, labels };
+};
+
 const createHeatmapData = (
   option: Record<string, unknown>,
   series: Record<string, unknown>[],
   indexes: number[]
 ) => {
+  if (indexes.some((index) => series[index]?.coordinateSystem === "calendar")) {
+    const calendar = createCalendarHeatmapData(option, series, indexes);
+    if (calendar) {
+      return calendar;
+    }
+  }
+
   const xLabels = getCategoryLabels(option);
   const yLabels = getAxisCategoryLabels(option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined);
   const labelIndexes = new Map<string, number>();
@@ -864,32 +999,11 @@ const createHeatmapData = (
   indexes.forEach((seriesIndex) => {
     const item = series[seriesIndex];
     const rawData = Array.isArray(item?.data) ? item.data : [];
-    const isCalendar = item?.coordinateSystem === "calendar";
     const baseName = seriesName(item ?? {}, seriesIndex);
 
     rawData.forEach((raw, dataIndex) => {
       const values = readHeatmapValue(raw);
       if (!values) {
-        return;
-      }
-
-      if (isCalendar) {
-        const rawX = values[0];
-        const rawValue = values[1];
-        const value = getHeatmapValue(rawValue);
-        if (value === null) {
-          return;
-        }
-
-        const label = typeof rawX === "string" || typeof rawX === "number" ? String(rawX) : String(dataIndex);
-        addPoint(baseName, {
-          x: labelIndex(label),
-          y2: value,
-          custom: {
-            seriesIndex,
-            dataIndex
-          }
-        });
         return;
       }
 

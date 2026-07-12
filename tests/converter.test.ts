@@ -738,8 +738,9 @@ describe("echartsOptionToChart2MusicConfig", () => {
     });
   });
 
-  it("converts calendar heatmap data to a single Chart2Music matrix group", () => {
+  it("converts calendar heatmaps into weekday rows and week columns", () => {
     const config = echartsOptionToChart2MusicConfig({
+      calendar: { range: ["2026-01-01", "2026-01-02"] },
       series: [
         {
           name: "Calendar",
@@ -751,13 +752,42 @@ describe("echartsOptionToChart2MusicConfig", () => {
     });
 
     expect(config?.type).toBe("matrix");
-    expect(config?.axes?.x?.valueLabels).toEqual(["2026-01-01", "2026-01-02"]);
+    expect(config?.axes?.x?.valueLabels).toEqual(["Week of Dec 28"]);
     expect(config?.data).toEqual({
-      Calendar: [
+      Sunday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Monday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Tuesday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Wednesday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Thursday: [
         { x: 0, y2: 10, custom: { seriesIndex: 0, dataIndex: 0 } },
-        { x: 1, y2: 15, custom: { seriesIndex: 0, dataIndex: 1 } }
+      ],
+      Friday: [
+        { x: 0, y2: 15, custom: { seriesIndex: 0, dataIndex: 1 } }
+      ],
+      Saturday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }]
+    });
+  });
+
+  it("keeps calendar heatmap rows aligned across weeks", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      calendar: { range: ["2026-01-01", "2026-01-10"] },
+      series: [
+        {
+          type: "heatmap",
+          coordinateSystem: "calendar",
+          data: [["2026-01-01", 10], ["2026-01-04", 20]]
+        }
       ]
     });
+    const rows = config?.data as Record<string, Array<{ x: number; y2: number }>>;
+
+    expect(config?.axes?.x?.valueLabels).toEqual(["Week of Dec 28", "Week of Jan 4"]);
+    expect(Object.keys(rows)).toEqual([
+      "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+    ]);
+    expect(Object.values(rows).every((row) => row.length === 2)).toBe(true);
+    expect(rows.Thursday?.[0]).toMatchObject({ x: 0, y2: 10 });
+    expect(rows.Sunday?.[1]).toMatchObject({ x: 1, y2: 20 });
   });
 
   it("converts ECharts line marks into Chart2Music annotations", () => {
