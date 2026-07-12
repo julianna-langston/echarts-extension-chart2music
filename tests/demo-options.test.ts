@@ -163,4 +163,14 @@ describe("demo chart examples", () => {
 
     expect(barLine && echartsOptionToChart2MusicConfig(barLine.option)?.type).toEqual(["bar", "line"]);
   });
+
+  it("uses the y-axis category labels for demo horizontal bars", () => {
+    const horizontal = supportedExamples.find((example) => example.title === "bar: horizontal");
+    const config = horizontal ? echartsOptionToChart2MusicConfig(horizontal.option) : null;
+
+    expect(config?.axes?.x?.valueLabels).toEqual(["Jan", "Feb", "Mar", "Apr", "May", "Jun"]);
+    expect(config?.data).toEqual(expect.arrayContaining([
+      { x: 0, y: 8, custom: { seriesIndex: 0, dataIndex: 0 } }
+    ]));
+  });
 });

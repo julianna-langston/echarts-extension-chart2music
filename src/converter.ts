@@ -1121,10 +1121,18 @@ export const echartsOptionToChart2MusicConfig = (
     };
   }
 
-  const categoryLabels = getCategoryLabels(option);
+  const xCategoryLabels = getCategoryLabels(option);
+  const yCategoryLabels = getAxisCategoryLabels(
+    option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
+  );
+  const categoryLabels = xCategoryLabels.length ? xCategoryLabels : yCategoryLabels;
   const xAxisName = getAxisName(
     option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
   );
+  const yAxisName = getAxisName(
+    option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
+  );
+  const categoryAxisName = xCategoryLabels.length ? xAxisName : yAxisName;
   const pieLabels =
     inferredType === "pie" && indexes.length === 1
       ? getDataItemNameLabels(firstSelectedSeries)
@@ -1182,7 +1190,7 @@ export const echartsOptionToChart2MusicConfig = (
   const axes = {
     x: {
       ...(labels.length ? { valueLabels: labels } : {}),
-      ...(xAxisName ? { label: xAxisName } : {}),
+      ...(categoryAxisName ? { label: categoryAxisName } : {}),
       ...options.axes?.x
     },
     y: {
