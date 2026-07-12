@@ -129,6 +129,32 @@ const createZoomRangeBridge = (chart: EChartsType) => {
     });
   };
 
+  const updateFromKeyboard = (input: HTMLInputElement, event: KeyboardEvent) => {
+    const step = Number(input.step) || 1;
+    const minimum = Number(input.min);
+    const maximum = Number(input.max);
+    const current = Number(input.value);
+    const nextValue = {
+      ArrowDown: current - step,
+      ArrowLeft: current - step,
+      ArrowRight: current + step,
+      ArrowUp: current + step,
+      End: maximum,
+      Home: minimum,
+      PageDown: current - step * 10,
+      PageUp: current + step * 10
+    }[event.key];
+
+    if (nextValue === undefined) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    input.value = String(Math.min(maximum, Math.max(minimum, nextValue)));
+    updateChartZoom();
+  };
+
   const syncFromChart = () => {
     const nextOption = chart.getOption() as Record<string, unknown>;
     const nextZoom = asArray(nextOption.dataZoom as DataZoomOption | DataZoomOption[] | undefined)[zoomIndex];
@@ -162,6 +188,8 @@ const createZoomRangeBridge = (chart: EChartsType) => {
 
   startInput.addEventListener("input", updateChartZoom);
   endInput.addEventListener("input", updateChartZoom);
+  startInput.addEventListener("keydown", (event) => updateFromKeyboard(startInput, event));
+  endInput.addEventListener("keydown", (event) => updateFromKeyboard(endInput, event));
   startInput.addEventListener("focus", () => setFocusedStyle(true));
   endInput.addEventListener("focus", () => setFocusedStyle(true));
   startInput.addEventListener("blur", () => setFocusedStyle(false));

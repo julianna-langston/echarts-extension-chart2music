@@ -385,6 +385,24 @@ describe("connect", () => {
     expect(startInput?.value).toBe("33");
     expect(endInput?.value).toBe("66");
 
+    const preventDefault = vi.fn();
+    const stopPropagation = vi.fn();
+    (startInput!.addEventListener as ReturnType<typeof vi.fn>).mock.calls
+      .find((call) => call[0] === "keydown")?.[1]({
+        key: "ArrowRight",
+        preventDefault,
+        stopPropagation
+      });
+    expect(startInput?.value).toBe("34");
+    expect(preventDefault).toHaveBeenCalled();
+    expect(stopPropagation).toHaveBeenCalled();
+    expect(chart.dispatchAction).toHaveBeenLastCalledWith({
+      type: "dataZoom",
+      dataZoomIndex: 1,
+      start: 34,
+      end: 66
+    });
+
     connection?.dispose();
     expect(chart.off).toHaveBeenCalledWith("datazoom", dataZoomHandler);
     expect(createdElements[0]?.remove).toHaveBeenCalled();
