@@ -4,7 +4,51 @@ import { regionMap, type DemoExample } from "./chart-examples.js";
 
 echarts.registerMap("demo-regions", regionMap);
 
-export const createEChartsExample = (example: DemoExample, sonified: boolean) => {
+export type EChartsStoryOptions = {
+  title: string;
+  showTitle: boolean;
+  showTooltip: boolean;
+  showXAxisLabels: boolean;
+  showYAxisLabels: boolean;
+  showLegend: boolean;
+  animation: boolean;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> => {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+};
+
+const setAxisLabelVisibility = (axis: unknown, visible: boolean) => {
+  if (Array.isArray(axis)) {
+    return axis.map((item) => setAxisLabelVisibility(item, visible));
+  }
+  if (!axis || typeof axis !== "object") {
+    return axis;
+  }
+  const value = axis as Record<string, unknown>;
+  return {
+    ...value,
+    axisLabel: { ...asRecord(value.axisLabel), show: visible }
+  };
+};
+
+const withStoryOptions = (example: DemoExample, options: EChartsStoryOptions) => ({
+  ...example.option,
+  animation: options.animation,
+  title: { ...asRecord(example.option.title), text: options.title, show: options.showTitle },
+  tooltip: { ...asRecord(example.option.tooltip), show: options.showTooltip },
+  legend: { ...asRecord(example.option.legend), show: options.showLegend },
+  xAxis: setAxisLabelVisibility(example.option.xAxis, options.showXAxisLabels),
+  yAxis: setAxisLabelVisibility(example.option.yAxis, options.showYAxisLabels)
+});
+
+export const createEChartsExample = (
+  example: DemoExample,
+  sonified: boolean,
+  options: EChartsStoryOptions
+) => {
   const root = document.createElement("div");
   const title = example.title ?? example.type;
 
@@ -22,7 +66,7 @@ export const createEChartsExample = (example: DemoExample, sonified: boolean) =>
 
   requestAnimationFrame(() => {
     const chart = echarts.init(chartElement);
-    chart.setOption(example.option as never);
+    chart.setOption(withStoryOptions(example, options) as never);
 
     const observer = new ResizeObserver(() => chart.resize());
     observer.observe(chartElement);

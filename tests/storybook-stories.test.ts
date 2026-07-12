@@ -25,6 +25,16 @@ describe("generated Storybook examples", () => {
     expect(lineStories).not.toContain('name: "line: smooth"');
   });
 
+  it("provides ECharts display options to every story section", () => {
+    generatedStories.forEach((source) => {
+      expect(source).toContain("showTooltip: true");
+      expect(source).toContain("showXAxisLabels: true");
+      expect(source).toContain("showYAxisLabels: true");
+      expect(source).toContain("showLegend: true");
+      expect(source).toContain("animation: true");
+    });
+  });
+
   it("puts unsupported ECharts types in the Visual only section", () => {
     const visualOnly = generatedStories.find((source) => source.includes('title: "ECharts Examples/Visual only"'));
     const visualOnlyNames = visualOnly
@@ -36,6 +46,6 @@ describe("generated Storybook examples", () => {
 
     expect(visualOnlyNames).toEqual(expectedVisualOnlyNames);
     expect(visualOnly).toContain("createEChartsExample(getExample");
-    expect(visualOnly).toContain(", false)");
+    expect(visualOnly).toContain(", false, args)");
   });
 });
