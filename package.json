@@ -1,0 +1,63 @@
+{
+  "name": "echarts-extension-chart2music",
+  "version": "0.1.0",
+  "description": "Apache ECharts extension for Chart2Music. Turns ECharts charts into music so blind users can hear data.",
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
+    "build": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "coverage": "vitest run --coverage",
+    "dev": "node scripts/dev-server.cjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "echarts",
+    "echarts-extension",
+    "chart2music",
+    "sonification",
+    "accessibility",
+    "a11y",
+    "charts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/julianna-langston/echarts-extension-chart2music.git"
+  },
+  "bugs": {
+    "url": "https://github.com/julianna-langston/echarts-extension-chart2music/issues"
+  },
+  "homepage": "https://github.com/julianna-langston/echarts-extension-chart2music#readme",
+  "license": "MIT",
+  "peerDependencies": {
+    "echarts": ">=5.0.0 <7"
+  },
+  "dependencies": {
+    "chart2music": "^1.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "1.6.1",
+    "echarts": "^5.5.1",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
