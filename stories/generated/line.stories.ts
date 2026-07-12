@@ -11,7 +11,7 @@ const getExample = (title: string) => {
   return example;
 };
 
-const meta = { title: "ECharts Examples/Line", parameters: { layout: "fullscreen" } } satisfies Meta;
+const meta = { title: "ECharts Examples/Line" } satisfies Meta;
 export default meta;
 type Story = StoryObj;
 
