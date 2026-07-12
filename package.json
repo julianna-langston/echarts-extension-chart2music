@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Apache ECharts extension for Chart2Music. Turns ECharts charts into music so blind users can hear data.",
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "packageManager": "pnpm@11.7.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -51,7 +54,7 @@
     "chart2music": "^1.20.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
+    "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "1.6.1",
     "echarts": "^5.5.1",
     "typescript": "^5.5.0",
