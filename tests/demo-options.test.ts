@@ -157,4 +157,10 @@ describe("demo chart examples", () => {
       { x: 4, open: 0, close: 17, low: 0, high: 17, custom: { seriesIndex: 1, dataIndex: 4 } }
     ]);
   });
+
+  it("preserves bar and line types in the demo bar-line chart", () => {
+    const barLine = supportedExamples.find((example) => example.title === "bar: bar-line");
+
+    expect(barLine && echartsOptionToChart2MusicConfig(barLine.option)?.type).toEqual(["bar", "line"]);
+  });
 });

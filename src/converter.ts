@@ -1131,6 +1131,7 @@ export const echartsOptionToChart2MusicConfig = (
       : [];
   const labels = pieLabels.some(Boolean) ? pieLabels : categoryLabels;
   const groups: EChartsMusicGroupData = {};
+  const groupTypes: C2MSeriesType[] = [];
   const shouldUseAxisLabelsForPointNames = inferredType === "pie" && pieLabels.some(Boolean);
 
   indexes.forEach((seriesIndex) => {
@@ -1148,6 +1149,7 @@ export const echartsOptionToChart2MusicConfig = (
       groups[seriesName(item ?? {}, seriesIndex)] = data
         .map((raw, dataIndex) => readPoint(raw, offsets[dataIndex], dataIndex, seriesIndex))
         .filter((point): point is EChartsMusicRangePoint | EChartsMusicOpenClosePoint => point !== null);
+      groupTypes.push("bar");
       return;
     }
 
@@ -1162,10 +1164,16 @@ export const echartsOptionToChart2MusicConfig = (
         )
       )
       .filter((point): point is EChartsMusicPoint => point !== null);
+    groupTypes.push(
+      echartsToC2MType[typeof item?.type === "string" ? item.type : "line"] ?? inferredType
+    );
   });
 
   const groupValues = Object.values(groups);
   const data = groupValues.length === 1 ? groupValues[0] ?? [] : groups;
+  const type =
+    options.type ??
+    (groupTypes.length > 1 && new Set(groupTypes).size > 1 ? groupTypes : groupTypes[0] ?? inferredType);
   const info = createMarkInfo(series, indexes, labels);
   const c2mOptions = {
     ...options.options,
@@ -1190,7 +1198,7 @@ export const echartsOptionToChart2MusicConfig = (
     ...(options.cc ? { cc: options.cc } : {}),
     ...(options.audioEngine ? { audioEngine: options.audioEngine } : {}),
     ...(options.lang ? { lang: options.lang } : {}),
-    type: inferredType,
+    type,
     title: getTitle(option, options.title),
     data,
     ...(mergedInfo ? { info: mergedInfo } : {}),

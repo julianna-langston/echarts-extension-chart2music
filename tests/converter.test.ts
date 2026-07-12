@@ -184,6 +184,22 @@ describe("echartsOptionToChart2MusicConfig", () => {
     });
   });
 
+  it("preserves types for mixed bar and line series", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { data: ["A", "B"] },
+      series: [
+        { name: "Sales", type: "bar", data: [12, 19] },
+        { name: "Conversion", type: "line", data: [3, 4] }
+      ]
+    });
+
+    expect(config?.type).toEqual(["bar", "line"]);
+    expect(config?.data).toMatchObject({
+      Sales: expect.arrayContaining([{ x: 0, y: 12, custom: { seriesIndex: 0, dataIndex: 0 } }]),
+      Conversion: expect.arrayContaining([{ x: 0, y: 3, custom: { seriesIndex: 1, dataIndex: 0 } }])
+    });
+  });
+
   it("enables Chart2Music stacking for stacked bar series", () => {
     const config = echartsOptionToChart2MusicConfig({
       xAxis: { data: ["A", "B"] },
