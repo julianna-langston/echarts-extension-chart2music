@@ -24,8 +24,9 @@
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
     "build": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
     "coverage": "vitest run --coverage",
-    "dev": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "generate-stories": "node scripts/generate-storybook-stories.cjs",
+    "dev": "node scripts/generate-storybook-stories.cjs && storybook dev -p 6006",
+    "build-storybook": "node scripts/generate-storybook-stories.cjs && storybook build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "prepack": "npm run build"
