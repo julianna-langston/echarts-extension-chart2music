@@ -15,7 +15,7 @@ const meta = { title: "ECharts Examples/Candlestick" } satisfies Meta;
 export default meta;
 type Story = StoryObj;
 
-export const CandlestickBasic: Story = { name: "candlestick: basic", render: () => createEChartsExample(getExample("candlestick: basic"), true) };
-export const CandlestickMovingAverage: Story = { name: "candlestick: moving average", render: () => createEChartsExample(getExample("candlestick: moving average"), true) };
-export const CandlestickVolume: Story = { name: "candlestick: volume", render: () => createEChartsExample(getExample("candlestick: volume"), true) };
-export const CandlestickMarksAndZoom: Story = { name: "candlestick: marks and zoom", render: () => createEChartsExample(getExample("candlestick: marks and zoom"), true) };
+export const Basic: Story = { name: "basic", render: () => createEChartsExample(getExample("candlestick: basic"), true) };
+export const MovingAverage: Story = { name: "moving average", render: () => createEChartsExample(getExample("candlestick: moving average"), true) };
+export const Volume: Story = { name: "volume", render: () => createEChartsExample(getExample("candlestick: volume"), true) };
+export const MarksAndZoom: Story = { name: "marks and zoom", render: () => createEChartsExample(getExample("candlestick: marks and zoom"), true) };

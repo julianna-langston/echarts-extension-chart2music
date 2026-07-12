@@ -15,7 +15,7 @@ const meta = { title: "ECharts Examples/Pie" } satisfies Meta;
 export default meta;
 type Story = StoryObj;
 
-export const PieDoughnut: Story = { name: "pie: doughnut", render: () => createEChartsExample(getExample("pie: doughnut"), true) };
-export const PieRose: Story = { name: "pie: rose", render: () => createEChartsExample(getExample("pie: rose"), true) };
-export const PieNestedRings: Story = { name: "pie: nested rings", render: () => createEChartsExample(getExample("pie: nested rings"), true) };
-export const PieHalfDoughnut: Story = { name: "pie: half doughnut", render: () => createEChartsExample(getExample("pie: half doughnut"), true) };
+export const Doughnut: Story = { name: "doughnut", render: () => createEChartsExample(getExample("pie: doughnut"), true) };
+export const Rose: Story = { name: "rose", render: () => createEChartsExample(getExample("pie: rose"), true) };
+export const NestedRings: Story = { name: "nested rings", render: () => createEChartsExample(getExample("pie: nested rings"), true) };
+export const HalfDoughnut: Story = { name: "half doughnut", render: () => createEChartsExample(getExample("pie: half doughnut"), true) };

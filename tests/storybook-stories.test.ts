@@ -9,13 +9,20 @@ const generatedStories = readdirSync(generatedDirectory)
 
 describe("generated Storybook examples", () => {
   it("creates one story for every chart example", () => {
-    const storyNames = generatedStories.flatMap((source) => [
-      ...source.matchAll(/name: ("(?:[^"\\]|\\.)*")/g)
+    const storyExamples = generatedStories.flatMap((source) => [
+      ...source.matchAll(/getExample\(("(?:[^"\\]|\\.)*")\)/g)
     ].map((match) => JSON.parse(match[1] ?? "\"\"")));
     const exampleNames = optionsByType.map((example) => example.title ?? example.type);
 
-    expect(storyNames).toHaveLength(exampleNames.length);
-    expect(new Set(storyNames)).toEqual(new Set(exampleNames));
+    expect(storyExamples).toHaveLength(exampleNames.length);
+    expect(new Set(storyExamples)).toEqual(new Set(exampleNames));
+  });
+
+  it("omits a supported chart type from its story label", () => {
+    const lineStories = generatedStories.find((source) => source.includes('title: "ECharts Examples/Line"'));
+
+    expect(lineStories).toContain('name: "smooth"');
+    expect(lineStories).not.toContain('name: "line: smooth"');
   });
 
   it("puts unsupported ECharts types in the Visual only section", () => {

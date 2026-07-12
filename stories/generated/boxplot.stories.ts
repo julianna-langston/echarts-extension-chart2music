@@ -15,7 +15,7 @@ const meta = { title: "ECharts Examples/Boxplot" } satisfies Meta;
 export default meta;
 type Story = StoryObj;
 
-export const BoxplotBasic: Story = { name: "boxplot: basic", render: () => createEChartsExample(getExample("boxplot: basic"), true) };
-export const BoxplotWithOutliers: Story = { name: "boxplot: with outliers", render: () => createEChartsExample(getExample("boxplot: with outliers"), true) };
-export const BoxplotGrouped: Story = { name: "boxplot: grouped", render: () => createEChartsExample(getExample("boxplot: grouped"), true) };
-export const BoxplotStyled: Story = { name: "boxplot: styled", render: () => createEChartsExample(getExample("boxplot: styled"), true) };
+export const Basic: Story = { name: "basic", render: () => createEChartsExample(getExample("boxplot: basic"), true) };
+export const WithOutliers: Story = { name: "with outliers", render: () => createEChartsExample(getExample("boxplot: with outliers"), true) };
+export const Grouped: Story = { name: "grouped", render: () => createEChartsExample(getExample("boxplot: grouped"), true) };
+export const Styled: Story = { name: "styled", render: () => createEChartsExample(getExample("boxplot: styled"), true) };
