@@ -712,7 +712,29 @@ describe("echartsOptionToChart2MusicConfig", () => {
         { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
         { x: 1, y2: 8, custom: { seriesIndex: 0, dataIndex: 1 } }
       ],
-      "Row 2": [{ x: 0, y2: 3, custom: { seriesIndex: 0, dataIndex: 2 } }]
+      "Row 2": [
+        { x: 0, y2: 3, custom: { seriesIndex: 0, dataIndex: 2 } },
+        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0 } }
+      ]
+    });
+  });
+
+  it("represents absent and explicitly missing heatmap cells as missing values", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "category", data: ["A", "B"] },
+      yAxis: { type: "category", data: ["Row 1", "Row 2"] },
+      series: [{ type: "heatmap", data: [[0, 0, 5], [1, 0, "-"], [0, 1, null]] }]
+    });
+
+    expect(config?.data).toEqual({
+      "Row 1": [
+        { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
+        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0, dataIndex: 1 } }
+      ],
+      "Row 2": [
+        { x: 0, y2: Number.NaN, custom: { seriesIndex: 0, dataIndex: 2 } },
+        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0 } }
+      ]
     });
   });
 

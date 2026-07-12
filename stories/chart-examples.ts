@@ -1324,7 +1324,7 @@ export const optionsByType = [
             xAxis: { type: "category", data: ["A", "B", "C", "D"] },
             yAxis: { type: "category", data: ["W", "X", "Y", "Z"] },
             visualMap: { min: 0, max: 10, left: 10, bottom: 10 },
-            series: [{ type: "heatmap", data: [[0, 0, 5], [1, 0, 8], [2, 1, 3], [3, 2, 9], [1, 3, 6]] }]
+            series: [{ type: "heatmap", data: [[0, 0, 5], [1, 0, 8], [2, 0, "-"], [2, 1, 3], [0, 2, null], [3, 2, 9], [1, 3, 6]] }]
           }
         },
         {

@@ -823,6 +823,14 @@ const readHeatmapValue = (raw: unknown): unknown[] | null => {
   return Array.isArray(value) ? value : null;
 };
 
+const getHeatmapValue = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === "-") {
+    return Number.NaN;
+  }
+
+  return typeof value === "number" ? value : null;
+};
+
 const createHeatmapData = (
   option: Record<string, unknown>,
   series: Record<string, unknown>[],
@@ -868,14 +876,15 @@ const createHeatmapData = (
       if (isCalendar) {
         const rawX = values[0];
         const rawValue = values[1];
-        if (typeof rawValue !== "number" || Number.isNaN(rawValue)) {
+        const value = getHeatmapValue(rawValue);
+        if (value === null) {
           return;
         }
 
         const label = typeof rawX === "string" || typeof rawX === "number" ? String(rawX) : String(dataIndex);
         addPoint(baseName, {
           x: labelIndex(label),
-          y2: rawValue,
+          y2: value,
           custom: {
             seriesIndex,
             dataIndex
@@ -887,7 +896,8 @@ const createHeatmapData = (
       const rawX = values[0];
       const rawY = values[1];
       const rawValue = values[2];
-      if (typeof rawValue !== "number" || Number.isNaN(rawValue)) {
+      const value = getHeatmapValue(rawValue);
+      if (value === null) {
         return;
       }
 
@@ -914,11 +924,30 @@ const createHeatmapData = (
       const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
       addPoint(groupName, {
         x,
-        y2: rawValue,
+        y2: value,
         custom: {
           seriesIndex,
           dataIndex
         }
+      });
+    });
+  });
+
+  indexes.forEach((seriesIndex) => {
+    const item = series[seriesIndex];
+    if (item?.type !== "heatmap" || item.coordinateSystem === "calendar") {
+      return;
+    }
+
+    const baseName = seriesName(item, seriesIndex);
+    yLabels.forEach((rowLabel, y) => {
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      const existing = new Map((groups[groupName] ?? []).map((point) => [point.x, point]));
+
+      groups[groupName] = labels.map((_, x) => existing.get(x) ?? {
+        x,
+        y2: Number.NaN,
+        custom: { seriesIndex }
       });
     });
   });

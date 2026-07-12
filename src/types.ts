@@ -101,7 +101,7 @@ export type EChartsMusicMatrixPoint = {
   y2: number;
   custom: {
     seriesIndex: number;
-    dataIndex: number;
+    dataIndex?: number;
   };
 };
 
