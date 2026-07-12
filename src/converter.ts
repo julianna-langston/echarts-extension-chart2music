@@ -5,6 +5,7 @@ import type {
   EChartsMusicCandlestickPoint,
   EChartsMusicGroupData,
   EChartsMusicMatrixPoint,
+  EChartsMusicOpenClosePoint,
   EChartsMusicPoint,
   EChartsMusicRangePoint
 } from "./types.js";
@@ -489,6 +490,35 @@ const readFloatingBarPoint = (
     x: dataIndex,
     low: Math.min(start, end),
     high: Math.max(start, end),
+    custom: {
+      seriesIndex,
+      dataIndex
+    }
+  };
+};
+
+const isWaterfallBar = (data: unknown[]) => data.some((raw) => (getNumericY(raw) ?? 0) < 0);
+
+const readWaterfallBarPoint = (
+  raw: unknown,
+  offset: unknown,
+  dataIndex: number,
+  seriesIndex: number
+): EChartsMusicOpenClosePoint | null => {
+  const open = getNumericY(offset);
+  const change = getNumericY(raw);
+
+  if (open === null || change === null) {
+    return null;
+  }
+
+  const close = open + change;
+  return {
+    x: dataIndex,
+    open,
+    close,
+    low: Math.min(open, close),
+    high: Math.max(open, close),
     custom: {
       seriesIndex,
       dataIndex
@@ -1114,9 +1144,10 @@ export const echartsOptionToChart2MusicConfig = (
 
     if (helper) {
       const offsets = Array.isArray(helper.data) ? helper.data : [];
+      const readPoint = isWaterfallBar(data) ? readWaterfallBarPoint : readFloatingBarPoint;
       groups[seriesName(item ?? {}, seriesIndex)] = data
-        .map((raw, dataIndex) => readFloatingBarPoint(raw, offsets[dataIndex], dataIndex, seriesIndex))
-        .filter((point): point is EChartsMusicRangePoint => point !== null);
+        .map((raw, dataIndex) => readPoint(raw, offsets[dataIndex], dataIndex, seriesIndex))
+        .filter((point): point is EChartsMusicRangePoint | EChartsMusicOpenClosePoint => point !== null);
       return;
     }
 

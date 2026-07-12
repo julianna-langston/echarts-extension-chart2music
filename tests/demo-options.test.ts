@@ -145,4 +145,16 @@ describe("demo chart examples", () => {
       { x: 5, low: 9, high: 22, custom: { seriesIndex: 1, dataIndex: 5 } }
     ]);
   });
+
+  it("represents demo waterfall bars with open and close values", () => {
+    const waterfall = supportedExamples.find((example) => example.title === "bar: waterfall");
+
+    expect(waterfall && echartsOptionToChart2MusicConfig(waterfall.option)?.data).toEqual([
+      { x: 0, open: 0, close: 20, low: 0, high: 20, custom: { seriesIndex: 1, dataIndex: 0 } },
+      { x: 1, open: 20, close: 35, low: 20, high: 35, custom: { seriesIndex: 1, dataIndex: 1 } },
+      { x: 2, open: 35, close: 22, low: 22, high: 35, custom: { seriesIndex: 1, dataIndex: 2 } },
+      { x: 3, open: 22, close: 17, low: 17, high: 22, custom: { seriesIndex: 1, dataIndex: 3 } },
+      { x: 4, open: 0, close: 17, low: 0, high: 17, custom: { seriesIndex: 1, dataIndex: 4 } }
+    ]);
+  });
 });
