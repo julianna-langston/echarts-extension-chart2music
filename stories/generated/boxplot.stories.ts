@@ -27,7 +27,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
-export const Basic: Story = { name: "basic", args: { title: "boxplot: basic" }, render: (args) => createEChartsExample(getExample("boxplot: basic"), true, args) };
-export const WithOutliers: Story = { name: "with outliers", args: { title: "boxplot: with outliers" }, render: (args) => createEChartsExample(getExample("boxplot: with outliers"), true, args) };
-export const Grouped: Story = { name: "grouped", args: { title: "boxplot: grouped" }, render: (args) => createEChartsExample(getExample("boxplot: grouped"), true, args) };
-export const Styled: Story = { name: "styled", args: { title: "boxplot: styled" }, render: (args) => createEChartsExample(getExample("boxplot: styled"), true, args) };
+export const Basic: Story = { name: "basic", args: {"title":"boxplot: basic"}, render: (args) => createEChartsExample(getExample("boxplot: basic"), true, args) };
+export const WithOutliers: Story = { name: "with outliers", args: {"title":"boxplot: with outliers"}, render: (args) => createEChartsExample(getExample("boxplot: with outliers"), true, args) };
+export const Grouped: Story = { name: "grouped", args: {"title":"boxplot: grouped"}, render: (args) => createEChartsExample(getExample("boxplot: grouped"), true, args) };
+export const Styled: Story = { name: "styled", args: {"title":"boxplot: styled"}, render: (args) => createEChartsExample(getExample("boxplot: styled"), true, args) };

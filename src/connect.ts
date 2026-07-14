@@ -1,5 +1,6 @@
 import c2mChart from "chart2music";
 import type { EChartsType } from "echarts/core";
+import type { C2MChartConfig } from "chart2music";
 import { echartsOptionToChart2MusicConfig } from "./converter.js";
 import type { EChartsChart2MusicConnection, EChartsChart2MusicOptions } from "./types.js";
 
@@ -16,6 +17,7 @@ type DataZoomOption = {
   bottom?: number | string;
   height?: number | string;
   handleStyle?: Record<string, unknown>;
+  showDetail?: boolean;
 };
 
 const makeCCElement = (chart: EChartsType, provided?: HTMLElement | null) => {
@@ -26,6 +28,41 @@ const makeCCElement = (chart: EChartsType, provided?: HTMLElement | null) => {
   const cc = document.createElement("div");
   chart.getDom().insertAdjacentElement("afterend", cc);
   return cc;
+};
+
+const normalizeOpenCloseData = (data: unknown): unknown => {
+  const normalizePoint = (point: unknown) => {
+    if (!point || typeof point !== "object" || Array.isArray(point)) {
+      return point;
+    }
+    const value = point as Record<string, unknown>;
+    if (
+      typeof value.open === "number" &&
+      typeof value.close === "number" &&
+      !("low" in value) &&
+      !("high" in value)
+    ) {
+      return {
+        ...value,
+        low: Math.min(value.open, value.close),
+        high: Math.max(value.open, value.close)
+      };
+    }
+    return value;
+  };
+
+  if (Array.isArray(data)) {
+    return data.map(normalizePoint);
+  }
+  if (data && typeof data === "object") {
+    return Object.fromEntries(
+      Object.entries(data as Record<string, unknown>).map(([group, points]) => [
+        group,
+        Array.isArray(points) ? points.map(normalizePoint) : points
+      ])
+    );
+  }
+  return data;
 };
 
 const createDataSnapshot = (option: Record<string, unknown>) => {
@@ -167,19 +204,25 @@ const createZoomRangeBridge = (chart: EChartsType) => {
     setRangeAria(endInput);
   };
 
+  const initialHandleStyle = zoom.handleStyle ?? {};
+  const initialShowDetail = zoom.showDetail;
   const setFocusedStyle = (focused: boolean) => {
-    const nextZooms = zooms.map((item, index) =>
+    const currentZooms = asArray(
+      (chart.getOption() as Record<string, unknown>).dataZoom as DataZoomOption | DataZoomOption[] | undefined
+    );
+    const nextZooms = currentZooms.map((item, index) =>
       index === zoomIndex
         ? {
             ...item,
+            showDetail: focused ? true : initialShowDetail,
             handleStyle: focused
               ? {
-                  ...item.handleStyle,
+                  ...initialHandleStyle,
                   borderColor: "#18212f",
                   shadowBlur: 6,
                   shadowColor: "rgba(24, 33, 47, 0.35)"
                 }
-              : zoom.handleStyle ?? {}
+              : initialHandleStyle
           }
         : item
     );
@@ -236,26 +279,38 @@ const isHierarchySeries = (seriesItem: Record<string, unknown> | undefined) => {
   return seriesItem?.type === "sunburst" || seriesItem?.type === "tree" || seriesItem?.type === "treemap";
 };
 
+type HighlightState = {
+  key: string;
+  seriesIndex: number;
+};
+
 const highlightCurrentPoint = (
   chart: EChartsType,
   c2m: EChartsChart2MusicConnection["c2m"],
-  previousPointKey?: string
+  previous?: HighlightState
 ) => {
   const current = c2m.getCurrent();
   const custom = current.point?.custom;
 
   if (!custom || typeof custom !== "object") {
-    return previousPointKey;
+    return previous;
   }
 
-  const { seriesIndex, dataIndex, name } = custom as {
+  const { seriesIndex: pointSeriesIndex, dataIndex: pointDataIndex, name, outlierIndexes } = custom as {
     seriesIndex?: number;
     dataIndex?: number;
     name?: string;
+    outlierIndexes?: Array<{ seriesIndex: number; dataIndex: number }>;
   };
-  if (seriesIndex === undefined || dataIndex === undefined) {
-    return previousPointKey;
+  if (pointSeriesIndex === undefined || pointDataIndex === undefined) {
+    return previous;
   }
+  const outlierIndex = (c2m as unknown as { _outlierIndex?: number })._outlierIndex;
+  const outlierTarget = current.stat === "outlier" && typeof outlierIndex === "number"
+    ? outlierIndexes?.[outlierIndex]
+    : undefined;
+  const seriesIndex = outlierTarget?.seriesIndex ?? pointSeriesIndex;
+  const dataIndex = outlierTarget?.dataIndex ?? pointDataIndex;
   const seriesItem = getSeriesItem(chart, seriesIndex);
   const hierarchyNode =
     name && isHierarchySeries(seriesItem) ? findNodeByName(getTreeRoot(chart, seriesIndex), name) : null;
@@ -267,13 +322,13 @@ const highlightCurrentPoint = (
         : { dataIndex };
   const pointKey = `${current.group}:${seriesIndex}:${"dataIndex" in target ? target.dataIndex : target.name}`;
 
-  if (pointKey === previousPointKey) {
-    return pointKey;
+  if (pointKey === previous?.key) {
+    return previous;
   }
 
   chart.dispatchAction({
     type: "downplay",
-    seriesIndex
+    seriesIndex: previous?.seriesIndex ?? seriesIndex
   });
   chart.dispatchAction({
     type: "highlight",
@@ -285,7 +340,7 @@ const highlightCurrentPoint = (
     seriesIndex,
     ...target
   });
-  return pointKey;
+  return { key: pointKey, seriesIndex };
 };
 
 const findNodeByName = (node: EChartsTreeNode | undefined, name: string): EChartsTreeNode | null => {
@@ -354,23 +409,26 @@ export const createEChartsMusic = (
   config.element = chart.getDom();
   config.cc = makeCCElement(chart, options.cc);
   const userOnFocusCallback = config.options?.onFocusCallback;
-  let lastHighlightedPointKey: string | undefined;
+  let lastHighlightedPoint: HighlightState | undefined;
   config.options = {
     ...config.options,
     onFocusCallback: (point) => {
       if (connection) {
         syncTreemapViewRoot(chart, connection.c2m);
-        lastHighlightedPointKey = highlightCurrentPoint(
+        lastHighlightedPoint = highlightCurrentPoint(
           chart,
           connection.c2m,
-          lastHighlightedPointKey
+          lastHighlightedPoint
         );
       }
       userOnFocusCallback?.(point);
     }
   };
 
-  const { err, data } = c2mChart(config);
+  const { err, data } = c2mChart({
+    ...config,
+    data: normalizeOpenCloseData(config.data) as C2MChartConfig["data"]
+  });
   if (err) {
     options.errorCallback?.(err);
     return null;

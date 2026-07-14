@@ -27,7 +27,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
-export const Doughnut: Story = { name: "doughnut", args: { title: "pie: doughnut" }, render: (args) => createEChartsExample(getExample("pie: doughnut"), true, args) };
-export const Rose: Story = { name: "rose", args: { title: "pie: rose" }, render: (args) => createEChartsExample(getExample("pie: rose"), true, args) };
-export const NestedRings: Story = { name: "nested rings", args: { title: "pie: nested rings" }, render: (args) => createEChartsExample(getExample("pie: nested rings"), true, args) };
-export const HalfDoughnut: Story = { name: "half doughnut", args: { title: "pie: half doughnut" }, render: (args) => createEChartsExample(getExample("pie: half doughnut"), true, args) };
+export const Doughnut: Story = { name: "doughnut", args: {"title":"pie: doughnut"}, render: (args) => createEChartsExample(getExample("pie: doughnut"), true, args) };
+export const Rose: Story = { name: "rose", args: {"title":"pie: rose"}, render: (args) => createEChartsExample(getExample("pie: rose"), true, args) };
+export const NestedRings: Story = { name: "nested rings", args: {"title":"pie: nested rings"}, render: (args) => createEChartsExample(getExample("pie: nested rings"), true, args) };
+export const HalfDoughnut: Story = { name: "half doughnut", args: {"title":"pie: half doughnut"}, render: (args) => createEChartsExample(getExample("pie: half doughnut"), true, args) };

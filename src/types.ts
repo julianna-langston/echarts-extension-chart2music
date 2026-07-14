@@ -62,8 +62,6 @@ export type EChartsMusicOpenClosePoint = {
   x: number;
   open: number;
   close: number;
-  high: number;
-  low: number;
   custom: {
     seriesIndex: number;
     dataIndex: number;
@@ -81,6 +79,10 @@ export type EChartsMusicBoxPoint = {
   custom: {
     seriesIndex: number;
     dataIndex: number;
+    outlierIndexes?: Array<{
+      seriesIndex: number;
+      dataIndex: number;
+    }>;
   };
 };
 

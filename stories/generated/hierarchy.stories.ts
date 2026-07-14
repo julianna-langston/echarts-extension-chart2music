@@ -27,12 +27,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
-export const SunburstHierarchy: Story = { name: "sunburst: hierarchy", args: { title: "sunburst: hierarchy" }, render: (args) => createEChartsExample(getExample("sunburst: hierarchy"), true, args) };
-export const TreeLeftToRight: Story = { name: "tree: left-to-right", args: { title: "tree: left-to-right" }, render: (args) => createEChartsExample(getExample("tree: left-to-right"), true, args) };
-export const TreeRadial: Story = { name: "tree: radial", args: { title: "tree: radial" }, render: (args) => createEChartsExample(getExample("tree: radial"), true, args) };
-export const TreeCollapsedBranches: Story = { name: "tree: collapsed branches", args: { title: "tree: collapsed branches" }, render: (args) => createEChartsExample(getExample("tree: collapsed branches"), true, args) };
-export const TreeVerticalOrg: Story = { name: "tree: vertical org", args: { title: "tree: vertical org" }, render: (args) => createEChartsExample(getExample("tree: vertical org"), true, args) };
-export const TreemapBasic: Story = { name: "treemap: basic", args: { title: "treemap: basic" }, render: (args) => createEChartsExample(getExample("treemap: basic"), true, args) };
-export const TreemapNested: Story = { name: "treemap: nested", args: { title: "treemap: nested" }, render: (args) => createEChartsExample(getExample("treemap: nested"), true, args) };
-export const TreemapLevels: Story = { name: "treemap: levels", args: { title: "treemap: levels" }, render: (args) => createEChartsExample(getExample("treemap: levels"), true, args) };
-export const TreemapVisualDimension: Story = { name: "treemap: visual dimension", args: { title: "treemap: visual dimension" }, render: (args) => createEChartsExample(getExample("treemap: visual dimension"), true, args) };
+export const SunburstHierarchy: Story = { name: "sunburst: hierarchy", args: {"title":"sunburst: hierarchy"}, render: (args) => createEChartsExample(getExample("sunburst: hierarchy"), true, args) };
+export const TreeLeftToRight: Story = { name: "tree: left-to-right", args: {"title":"tree: left-to-right"}, render: (args) => createEChartsExample(getExample("tree: left-to-right"), true, args) };
+export const TreeRadial: Story = { name: "tree: radial", args: {"title":"tree: radial"}, render: (args) => createEChartsExample(getExample("tree: radial"), true, args) };
+export const TreeCollapsedBranches: Story = { name: "tree: collapsed branches", args: {"title":"tree: collapsed branches"}, render: (args) => createEChartsExample(getExample("tree: collapsed branches"), true, args) };
+export const TreeVerticalOrg: Story = { name: "tree: vertical org", args: {"title":"tree: vertical org"}, render: (args) => createEChartsExample(getExample("tree: vertical org"), true, args) };
+export const TreemapBasic: Story = { name: "treemap: basic", args: {"title":"treemap: basic"}, render: (args) => createEChartsExample(getExample("treemap: basic"), true, args) };
+export const TreemapNested: Story = { name: "treemap: nested", args: {"title":"treemap: nested"}, render: (args) => createEChartsExample(getExample("treemap: nested"), true, args) };
+export const TreemapLevels: Story = { name: "treemap: levels", args: {"title":"treemap: levels"}, render: (args) => createEChartsExample(getExample("treemap: levels"), true, args) };
+export const TreemapVisualDimension: Story = { name: "treemap: visual dimension", args: {"title":"treemap: visual dimension"}, render: (args) => createEChartsExample(getExample("treemap: visual dimension"), true, args) };

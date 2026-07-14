@@ -35,8 +35,14 @@ describe("generated Storybook examples", () => {
     });
   });
 
-  it("puts unsupported ECharts types in the Visual only section", () => {
-    const visualOnly = generatedStories.find((source) => source.includes('title: "ECharts Examples/Visual only"'));
+  it("applies example-specific display defaults", () => {
+    const barStories = generatedStories.find((source) => source.includes('title: "ECharts Examples/Bar"'));
+
+    expect(barStories).toContain('args: {"title":"bar: basic","showLegend":false}');
+  });
+
+  it("puts unsupported ECharts types in the Not Supported section", () => {
+    const visualOnly = generatedStories.find((source) => source.includes('title: "ECharts Examples/Not Supported"'));
     const visualOnlyNames = visualOnly
       ? [...visualOnly.matchAll(/name: ("(?:[^"\\]|\\.)*")/g)].map((match) => JSON.parse(match[1] ?? "\"\""))
       : [];

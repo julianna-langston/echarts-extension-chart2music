@@ -27,6 +27,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
-export const Conversion: Story = { name: "conversion", args: { title: "funnel: conversion" }, render: (args) => createEChartsExample(getExample("funnel: conversion"), true, args) };
-export const SortedAscending: Story = { name: "sorted ascending", args: { title: "funnel: sorted ascending" }, render: (args) => createEChartsExample(getExample("funnel: sorted ascending"), true, args) };
-export const Compare: Story = { name: "compare", args: { title: "funnel: compare" }, render: (args) => createEChartsExample(getExample("funnel: compare"), true, args) };
+export const Conversion: Story = { name: "conversion", args: {"title":"funnel: conversion"}, render: (args) => createEChartsExample(getExample("funnel: conversion"), true, args) };
+export const SortedAscending: Story = { name: "sorted ascending", args: {"title":"funnel: sorted ascending"}, render: (args) => createEChartsExample(getExample("funnel: sorted ascending"), true, args) };
+export const Compare: Story = { name: "compare", args: {"title":"funnel: compare"}, render: (args) => createEChartsExample(getExample("funnel: compare"), true, args) };

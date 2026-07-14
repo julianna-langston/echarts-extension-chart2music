@@ -27,11 +27,11 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
-export const Smooth: Story = { name: "smooth", args: { title: "line: smooth" }, render: (args) => createEChartsExample(getExample("line: smooth"), true, args) };
-export const MultipleSeries: Story = { name: "multiple series", args: { title: "line: multiple series" }, render: (args) => createEChartsExample(getExample("line: multiple series"), true, args) };
-export const GapsAndJumps: Story = { name: "gaps and jumps", args: { title: "line: gaps and jumps" }, render: (args) => createEChartsExample(getExample("line: gaps and jumps"), true, args) };
-export const Stepped: Story = { name: "stepped", args: { title: "line: stepped" }, render: (args) => createEChartsExample(getExample("line: stepped"), true, args) };
-export const Area: Story = { name: "area", args: { title: "line: area" }, render: (args) => createEChartsExample(getExample("line: area"), true, args) };
-export const StackedArea: Story = { name: "stacked area", args: { title: "line: stacked area" }, render: (args) => createEChartsExample(getExample("line: stacked area"), true, args) };
-export const Marks: Story = { name: "marks", args: { title: "line: marks" }, render: (args) => createEChartsExample(getExample("line: marks"), true, args) };
-export const VisualMap: Story = { name: "visual map", args: { title: "line: visual map" }, render: (args) => createEChartsExample(getExample("line: visual map"), true, args) };
+export const Smooth: Story = { name: "smooth", args: {"title":"line: smooth"}, render: (args) => createEChartsExample(getExample("line: smooth"), true, args) };
+export const MultipleSeries: Story = { name: "multiple series", args: {"title":"line: multiple series"}, render: (args) => createEChartsExample(getExample("line: multiple series"), true, args) };
+export const GapsAndJumps: Story = { name: "gaps and jumps", args: {"title":"line: gaps and jumps"}, render: (args) => createEChartsExample(getExample("line: gaps and jumps"), true, args) };
+export const Stepped: Story = { name: "stepped", args: {"title":"line: stepped"}, render: (args) => createEChartsExample(getExample("line: stepped"), true, args) };
+export const Area: Story = { name: "area", args: {"title":"line: area"}, render: (args) => createEChartsExample(getExample("line: area"), true, args) };
+export const StackedArea: Story = { name: "stacked area", args: {"title":"line: stacked area"}, render: (args) => createEChartsExample(getExample("line: stacked area"), true, args) };
+export const Marks: Story = { name: "marks", args: {"title":"line: marks"}, render: (args) => createEChartsExample(getExample("line: marks"), true, args) };
+export const VisualMap: Story = { name: "visual map", args: {"title":"line: visual map"}, render: (args) => createEChartsExample(getExample("line: visual map"), true, args) };

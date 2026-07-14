@@ -5,6 +5,7 @@ export type DemoExample = {
   type: string;
   category?: string;
   title?: string;
+  storyArgs?: Record<string, unknown>;
   option: Record<string, unknown>;
 };
 
@@ -160,10 +161,11 @@ export const optionsByType = [
         {
           type: "bar",
           title: "bar: basic",
+          storyArgs: { showLegend: false },
           option: {
             grid: cartesianGrid,
             xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
-            yAxis: { type: "value" },
+            yAxis: { type: "value", name: "Revenue" },
             series: [{ name: "Revenue", type: "bar", data: values }]
           }
         },
@@ -186,6 +188,7 @@ export const optionsByType = [
           type: "bar",
           title: "bar: stacked",
           option: {
+            tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
             grid: { ...cartesianGrid, top: 42 },
             legend: { top: 0, right: 8 },
             xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
@@ -1248,7 +1251,8 @@ export const optionsByType = [
                 name: "MA",
                 type: "line",
                 smooth: true,
-                symbol: "none",
+                symbol: "circle",
+                symbolSize: 7,
                 data: [27, 32, 34, 35, 37, 40]
               }
             ]

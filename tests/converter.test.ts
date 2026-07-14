@@ -254,10 +254,10 @@ describe("echartsOptionToChart2MusicConfig", () => {
     expect(config?.type).toBe("bar");
     expect(config?.options?.stack).toBeUndefined();
     expect(config?.data).toEqual([
-      { x: 0, open: 0, close: 20, low: 0, high: 20, custom: { seriesIndex: 1, dataIndex: 0 } },
-      { x: 1, open: 20, close: 35, low: 20, high: 35, custom: { seriesIndex: 1, dataIndex: 1 } },
-      { x: 2, open: 35, close: 22, low: 22, high: 35, custom: { seriesIndex: 1, dataIndex: 2 } },
-      { x: 3, open: 0, close: 22, low: 0, high: 22, custom: { seriesIndex: 1, dataIndex: 3 } }
+      { x: 0, open: 0, close: 20, custom: { seriesIndex: 1, dataIndex: 0 } },
+      { x: 1, open: 20, close: 35, custom: { seriesIndex: 1, dataIndex: 1 } },
+      { x: 2, open: 35, close: 22, custom: { seriesIndex: 1, dataIndex: 2 } },
+      { x: 3, open: 0, close: 22, custom: { seriesIndex: 1, dataIndex: 3 } }
     ]);
   });
 
@@ -435,7 +435,7 @@ describe("echartsOptionToChart2MusicConfig", () => {
         q3: 14,
         high: 18,
         outlier: [24],
-        custom: { seriesIndex: 0, dataIndex: 0 }
+        custom: { seriesIndex: 0, dataIndex: 0, outlierIndexes: [{ seriesIndex: 1, dataIndex: 0 }] }
       },
       {
         x: 1,
@@ -445,7 +445,11 @@ describe("echartsOptionToChart2MusicConfig", () => {
         q3: 16,
         high: 21,
         outlier: [3, 27],
-        custom: { seriesIndex: 0, dataIndex: 1 }
+        custom: {
+          seriesIndex: 0,
+          dataIndex: 1,
+          outlierIndexes: [{ seriesIndex: 1, dataIndex: 1 }, { seriesIndex: 1, dataIndex: 2 }]
+        }
       }
     ]);
   });
@@ -708,13 +712,13 @@ describe("echartsOptionToChart2MusicConfig", () => {
     expect(config?.type).toBe("matrix");
     expect(config?.axes?.x?.valueLabels).toEqual(["A", "B"]);
     expect(config?.data).toEqual({
-      "Row 1": [
-        { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
-        { x: 1, y2: 8, custom: { seriesIndex: 0, dataIndex: 1 } }
-      ],
       "Row 2": [
         { x: 0, y2: 3, custom: { seriesIndex: 0, dataIndex: 2 } },
         { x: 1, y2: Number.NaN, custom: { seriesIndex: 0 } }
+      ],
+      "Row 1": [
+        { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
+        { x: 1, y2: 8, custom: { seriesIndex: 0, dataIndex: 1 } }
       ]
     });
   });
@@ -727,13 +731,13 @@ describe("echartsOptionToChart2MusicConfig", () => {
     });
 
     expect(config?.data).toEqual({
-      "Row 1": [
-        { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
-        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0, dataIndex: 1 } }
-      ],
       "Row 2": [
         { x: 0, y2: Number.NaN, custom: { seriesIndex: 0, dataIndex: 2 } },
         { x: 1, y2: Number.NaN, custom: { seriesIndex: 0 } }
+      ],
+      "Row 1": [
+        { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
+        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0, dataIndex: 1 } }
       ]
     });
   });

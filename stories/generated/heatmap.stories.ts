@@ -27,6 +27,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
-export const Matrix: Story = { name: "matrix", args: { title: "heatmap: matrix" }, render: (args) => createEChartsExample(getExample("heatmap: matrix"), true, args) };
-export const Calendar: Story = { name: "calendar", args: { title: "heatmap: calendar" }, render: (args) => createEChartsExample(getExample("heatmap: calendar"), true, args) };
-export const Labeled: Story = { name: "labeled", args: { title: "heatmap: labeled" }, render: (args) => createEChartsExample(getExample("heatmap: labeled"), true, args) };
+export const Matrix: Story = { name: "matrix", args: {"title":"heatmap: matrix"}, render: (args) => createEChartsExample(getExample("heatmap: matrix"), true, args) };
+export const Calendar: Story = { name: "calendar", args: {"title":"heatmap: calendar"}, render: (args) => createEChartsExample(getExample("heatmap: calendar"), true, args) };
+export const Labeled: Story = { name: "labeled", args: {"title":"heatmap: labeled"}, render: (args) => createEChartsExample(getExample("heatmap: labeled"), true, args) };

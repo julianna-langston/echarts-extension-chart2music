@@ -371,6 +371,7 @@ describe("connect", () => {
           end: 125,
           bottom: 12,
           height: 28,
+          showDetail: true,
           handleStyle: {
             borderColor: "#18212f",
             shadowBlur: 6,
@@ -401,6 +402,14 @@ describe("connect", () => {
       dataZoomIndex: 1,
       start: 34,
       end: 66
+    });
+
+    (startInput!.addEventListener as ReturnType<typeof vi.fn>).mock.calls.find((call) => call[0] === "blur")?.[1]();
+    expect(chart.setOption).toHaveBeenLastCalledWith({
+      dataZoom: [
+        { type: "inside" },
+        { type: "slider", start: 33, end: 66, bottom: 12, height: 28, showDetail: undefined, handleStyle: {} }
+      ]
     });
 
     connection?.dispose();
@@ -492,6 +501,77 @@ describe("connect", () => {
       seriesIndex: 0,
       dataIndex: 0
     });
+  });
+
+  it("highlights the selected scatter outlier for boxplot outlier navigation", () => {
+    const cc = makeElement();
+    const chart = makeChart({
+      xAxis: { data: ["A"] },
+      series: [
+        { type: "boxplot", data: [[4, 7, 10, 14, 18]] },
+        { type: "scatter", data: [[0, 3], [0, 26]] }
+      ]
+    });
+    const point = {
+      x: 0,
+      low: 4,
+      q1: 7,
+      median: 10,
+      q3: 14,
+      high: 18,
+      outlier: [3, 26],
+      custom: {
+        seriesIndex: 0,
+        dataIndex: 0,
+        outlierIndexes: [{ seriesIndex: 1, dataIndex: 0 }, { seriesIndex: 1, dataIndex: 1 }]
+      }
+    };
+    Object.assign(chart2MusicMock.c2m, { _outlierIndex: 1 });
+    chart2MusicMock.c2m.getCurrent.mockReturnValue({ group: "Series 1", point, stat: "outlier" });
+
+    connect(chart as unknown as Parameters<typeof connect>[0], { cc });
+    const config = chart2MusicMock.c2mChart.mock.calls[0]?.[0] as {
+      options?: { onFocusCallback?: () => void };
+    };
+    config.options?.onFocusCallback?.();
+
+    expect(chart.dispatchAction).toHaveBeenCalledWith({
+      type: "highlight",
+      seriesIndex: 1,
+      dataIndex: 1
+    });
+  });
+
+  it("clears the previous ECharts series when changing Chart2Music groups", () => {
+    const cc = makeElement();
+    const chart = makeChart({
+      xAxis: { data: ["A"] },
+      series: [
+        { name: "Control", type: "bar", data: [4] },
+        { name: "Variant", type: "bar", data: [8] }
+      ]
+    });
+    const current: {
+      group: string;
+      point: { custom: { seriesIndex: number; dataIndex: number } };
+    } = { group: "Control", point: { custom: { seriesIndex: 0, dataIndex: 0 } } };
+    chart2MusicMock.c2m.getCurrent.mockImplementation(() => current);
+
+    connect(chart as unknown as Parameters<typeof connect>[0], { cc });
+    const config = chart2MusicMock.c2mChart.mock.calls[0]?.[0] as {
+      options?: { onFocusCallback?: () => void };
+    };
+    config.options?.onFocusCallback?.();
+    current.group = "Variant";
+    current.point = { custom: { seriesIndex: 1, dataIndex: 0 } };
+    config.options?.onFocusCallback?.();
+
+    expect(chart.dispatchAction).toHaveBeenLastCalledWith({
+      type: "showTip",
+      seriesIndex: 1,
+      dataIndex: 0
+    });
+    expect(chart.dispatchAction).toHaveBeenCalledWith({ type: "downplay", seriesIndex: 0 });
   });
 
   it("disposes Chart2Music and detaches the ECharts finished listener", () => {

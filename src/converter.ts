@@ -517,8 +517,6 @@ const readWaterfallBarPoint = (
     x: dataIndex,
     open,
     close,
-    low: Math.min(open, close),
-    high: Math.max(open, close),
     custom: {
       seriesIndex,
       dataIndex
@@ -721,7 +719,7 @@ const createBoxplotData = (
           : [];
 
     matchingGroups.forEach((groupName) => {
-      rawData.forEach((raw) => {
+      rawData.forEach((raw, dataIndex) => {
         const values = numericArrayFromData(raw);
         if (!values || !hasAtLeast(values, 2)) {
           return;
@@ -736,6 +734,10 @@ const createBoxplotData = (
         const box = groups[groupName]?.find((point) => point.x === x);
         if (box) {
           box.outlier = [...(box.outlier ?? []), outlier];
+          box.custom.outlierIndexes = [
+            ...(box.custom.outlierIndexes ?? []),
+            { seriesIndex, dataIndex }
+          ];
         }
       });
     });
@@ -1066,8 +1068,26 @@ const createHeatmapData = (
     });
   });
 
+  const orderedGroups: Record<string, EChartsMusicMatrixPoint[]> = {};
+  indexes.forEach((seriesIndex) => {
+    const item = series[seriesIndex];
+    if (item?.type !== "heatmap" || item.coordinateSystem === "calendar") {
+      return;
+    }
+    const baseName = seriesName(item, seriesIndex);
+    [...yLabels].reverse().forEach((rowLabel) => {
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      if (groups[groupName]) {
+        orderedGroups[groupName] = groups[groupName];
+      }
+    });
+  });
+  Object.entries(groups).forEach(([groupName, points]) => {
+    orderedGroups[groupName] ??= points;
+  });
+
   return {
-    data: groups,
+    data: orderedGroups,
     labels
   };
 };
@@ -1131,7 +1151,7 @@ export const echartsOptionToChart2MusicConfig = (
       ...(options.lang ? { lang: options.lang } : {}),
       type: "treemap",
       title: getTitle(option, options.title),
-      data: hierarchy.data,
+      data: hierarchy.data as C2MChartConfig["data"],
       ...(info ? { info } : {}),
       options: c2mOptions,
       axes: {
@@ -1170,7 +1190,7 @@ export const echartsOptionToChart2MusicConfig = (
       ...(options.lang ? { lang: options.lang } : {}),
       type: "bar",
       title: getTitle(option, options.title),
-      data: funnel.data,
+      data: funnel.data as C2MChartConfig["data"],
       ...(info ? { info } : {}),
       ...(options.options && Object.keys(options.options).length ? { options: options.options } : {}),
       axes
@@ -1229,7 +1249,7 @@ export const echartsOptionToChart2MusicConfig = (
       ...(options.lang ? { lang: options.lang } : {}),
       type: candlestick.type,
       title: getTitle(option, options.title),
-      data: candlestick.data,
+      data: candlestick.data as C2MChartConfig["data"],
       ...(mergedInfo ? { info: mergedInfo } : {}),
       ...(options.options && Object.keys(options.options).length ? { options: options.options } : {}),
       axes
@@ -1276,6 +1296,7 @@ export const echartsOptionToChart2MusicConfig = (
     option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
   );
   const categoryAxisName = xCategoryLabels.length ? xAxisName : yAxisName;
+  const valueAxisName = xCategoryLabels.length ? yAxisName : xAxisName;
   const pieLabels =
     inferredType === "pie" && indexes.length === 1
       ? getDataItemNameLabels(firstSelectedSeries)
@@ -1338,6 +1359,7 @@ export const echartsOptionToChart2MusicConfig = (
     },
     y: {
       format: (value: number) => value.toLocaleString(),
+      ...(valueAxisName ? { label: valueAxisName } : {}),
       ...options.axes?.y
     },
     ...(options.axes?.y2 ? { y2: options.axes.y2 } : {})
@@ -1351,7 +1373,7 @@ export const echartsOptionToChart2MusicConfig = (
     ...(options.lang ? { lang: options.lang } : {}),
     type,
     title: getTitle(option, options.title),
-    data,
+    data: data as C2MChartConfig["data"],
     ...(mergedInfo ? { info: mergedInfo } : {}),
     ...(Object.keys(c2mOptions).length ? { options: c2mOptions } : {}),
     axes

@@ -27,8 +27,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
-export const Basic: Story = { name: "basic", args: { title: "scatter: basic" }, render: (args) => createEChartsExample(getExample("scatter: basic"), true, args) };
-export const Colored: Story = { name: "colored", args: { title: "scatter: colored" }, render: (args) => createEChartsExample(getExample("scatter: colored"), true, args) };
-export const Categories: Story = { name: "categories", args: { title: "scatter: categories" }, render: (args) => createEChartsExample(getExample("scatter: categories"), true, args) };
-export const ScatterEffect: Story = { name: "scatter: effect", args: { title: "scatter: effect" }, render: (args) => createEChartsExample(getExample("scatter: effect"), true, args) };
-export const MixedEffect: Story = { name: "mixed effect", args: { title: "scatter: mixed effect" }, render: (args) => createEChartsExample(getExample("scatter: mixed effect"), true, args) };
+export const Basic: Story = { name: "basic", args: {"title":"scatter: basic"}, render: (args) => createEChartsExample(getExample("scatter: basic"), true, args) };
+export const Colored: Story = { name: "colored", args: {"title":"scatter: colored"}, render: (args) => createEChartsExample(getExample("scatter: colored"), true, args) };
+export const Categories: Story = { name: "categories", args: {"title":"scatter: categories"}, render: (args) => createEChartsExample(getExample("scatter: categories"), true, args) };
+export const ScatterEffect: Story = { name: "scatter: effect", args: {"title":"scatter: effect"}, render: (args) => createEChartsExample(getExample("scatter: effect"), true, args) };
+export const MixedEffect: Story = { name: "mixed effect", args: {"title":"scatter: mixed effect"}, render: (args) => createEChartsExample(getExample("scatter: mixed effect"), true, args) };
