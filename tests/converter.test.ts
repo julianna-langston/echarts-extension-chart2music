@@ -236,7 +236,8 @@ describe("echartsOptionToChart2MusicConfig", () => {
     ]);
   });
 
-  it("converts waterfall bars into open and close values without Chart2Music stacking", () => {
+  it("ignores waterfall bars", () => {
+    const errorCallback = vi.fn();
     const config = echartsOptionToChart2MusicConfig({
       xAxis: { data: ["Start", "Sales", "Costs", "End"] },
       series: [
@@ -249,16 +250,27 @@ describe("echartsOptionToChart2MusicConfig", () => {
         },
         { name: "Change", type: "bar", stack: "total", data: [20, 15, -13, 22] }
       ]
-    });
+    }, { errorCallback });
 
-    expect(config?.type).toBe("bar");
-    expect(config?.options?.stack).toBeUndefined();
-    expect(config?.data).toEqual([
-      { x: 0, open: 0, close: 20, custom: { seriesIndex: 1, dataIndex: 0 } },
-      { x: 1, open: 20, close: 35, custom: { seriesIndex: 1, dataIndex: 1 } },
-      { x: 2, open: 35, close: 22, custom: { seriesIndex: 1, dataIndex: 2 } },
-      { x: 3, open: 0, close: 22, custom: { seriesIndex: 1, dataIndex: 3 } }
-    ]);
+    expect(config).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("waterfall bar charts are not supported"));
+  });
+
+  it("ignores a waterfall base series selected explicitly", () => {
+    const errorCallback = vi.fn();
+    const config = echartsOptionToChart2MusicConfig(
+      {
+        xAxis: { data: ["Start", "Sales"] },
+        series: [
+          { name: "Base", type: "bar", stack: "total", itemStyle: { color: "transparent" }, data: [0, 20] },
+          { name: "Change", type: "bar", stack: "total", data: [20, -5] }
+        ]
+      },
+      { seriesIndex: 0, errorCallback }
+    );
+
+    expect(config).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("waterfall bar charts are not supported"));
   });
 
   it("uses pie data item names as x-axis labels", () => {

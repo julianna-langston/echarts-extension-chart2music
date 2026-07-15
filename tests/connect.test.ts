@@ -128,6 +128,35 @@ describe("connect", () => {
     expect(chart.on).toHaveBeenCalledWith("finished", connection?.update);
   });
 
+  it("ignores waterfall bars without attaching ECharts interaction hooks", () => {
+    const errorCallback = vi.fn();
+    const chart = makeChart({
+      xAxis: { data: ["Start", "Sales", "Costs"] },
+      series: [
+        {
+          name: "Base",
+          type: "bar",
+          stack: "total",
+          itemStyle: { color: "transparent" },
+          data: [0, 20, 35]
+        },
+        { name: "Change", type: "bar", stack: "total", data: [20, 15, -13] }
+      ]
+    });
+
+    const connection = connect(chart as unknown as Parameters<typeof connect>[0], {
+      cc: makeElement(),
+      errorCallback
+    });
+
+    expect(connection).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("waterfall bar charts are not supported"));
+    expect(chart2MusicMock.c2mChart).not.toHaveBeenCalled();
+    expect(chart.on).not.toHaveBeenCalled();
+    expect(chart.off).not.toHaveBeenCalled();
+    expect(chart.dispatchAction).not.toHaveBeenCalled();
+  });
+
   it("updates Chart2Music data after the ECharts series changes", () => {
     const cc = makeElement();
     const option = {

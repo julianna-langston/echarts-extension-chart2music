@@ -227,6 +227,7 @@ export const optionsByType = [
         },
         {
           type: "bar",
+          category: "not-supported",
           title: "bar: waterfall",
           option: {
             grid: cartesianGrid,

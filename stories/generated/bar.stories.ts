@@ -31,7 +31,6 @@ export const Basic: Story = { name: "basic", args: {"title":"bar: basic","showLe
 export const Grouped: Story = { name: "grouped", args: {"title":"bar: grouped"}, render: (args) => createEChartsExample(getExample("bar: grouped"), true, args) };
 export const Stacked: Story = { name: "stacked", args: {"title":"bar: stacked"}, render: (args) => createEChartsExample(getExample("bar: stacked"), true, args) };
 export const FloatingRange: Story = { name: "floating range", args: {"title":"bar: floating range"}, render: (args) => createEChartsExample(getExample("bar: floating range"), true, args) };
-export const Waterfall: Story = { name: "waterfall", args: {"title":"bar: waterfall"}, render: (args) => createEChartsExample(getExample("bar: waterfall"), true, args) };
 export const BarLine: Story = { name: "bar-line", args: {"title":"bar: bar-line"}, render: (args) => createEChartsExample(getExample("bar: bar-line"), true, args) };
 export const DataLabels: Story = { name: "data labels", args: {"title":"bar: data labels"}, render: (args) => createEChartsExample(getExample("bar: data labels"), true, args) };
 export const Horizontal: Story = { name: "horizontal", args: {"title":"bar: horizontal"}, render: (args) => createEChartsExample(getExample("bar: horizontal"), true, args) };
