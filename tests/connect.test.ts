@@ -463,6 +463,50 @@ describe("connect", () => {
     expect(onFocusCallback).toHaveBeenCalledWith(callbackPoint);
   });
 
+  it("highlights a transparent total overlay and shows the axis tooltip for stacked-bar All values", () => {
+    const cc = makeElement();
+    const chart = makeChart({
+      xAxis: { data: ["A", "B"] },
+      series: [
+        { name: "Cats", type: "bar", stack: "total", data: [1, 2] },
+        { name: "Dogs", type: "bar", stack: "total", data: [3, 4] }
+      ]
+    });
+    const current = {
+      group: "All",
+      point: { x: 1, y: 6, custom: { seriesIndex: 0, dataIndex: 1 } }
+    };
+    chart2MusicMock.c2m.getCurrent.mockImplementation(() => current);
+
+    connect(chart as unknown as Parameters<typeof connect>[0], { cc });
+    const config = chart2MusicMock.c2mChart.mock.calls[0]?.[0] as {
+      options?: { onFocusCallback?: () => void };
+    };
+    config.options?.onFocusCallback?.();
+
+    expect(chart.setOption).toHaveBeenCalledWith({
+      series: expect.arrayContaining([
+        expect.objectContaining({
+          id: "__chart2music_stacked_total_overlay__",
+          data: [4, 6],
+          silent: true,
+          tooltip: { show: false },
+          barGap: "-100%",
+          emphasis: { itemStyle: expect.objectContaining({ borderColor: "#000", borderWidth: 2 }) }
+        })
+      ])
+    });
+    expect(chart.dispatchAction).toHaveBeenCalledWith({ type: "highlight", seriesIndex: 2, dataIndex: 1 });
+    expect(chart.dispatchAction).toHaveBeenCalledWith({ type: "showTip", xAxisIndex: 0, dataIndex: 1 });
+
+    current.group = "Cats";
+    current.point = { x: 1, y: 2, custom: { seriesIndex: 0, dataIndex: 1 } };
+    config.options?.onFocusCallback?.();
+
+    expect(chart.dispatchAction).toHaveBeenCalledWith({ type: "downplay", seriesIndex: 2 });
+    expect(chart.dispatchAction).toHaveBeenCalledWith({ type: "highlight", seriesIndex: 0, dataIndex: 1 });
+  });
+
   it("does not move the ECharts tooltip when Chart2Music changes boxplot statistics", () => {
     const cc = makeElement();
     const callbackPoint = {

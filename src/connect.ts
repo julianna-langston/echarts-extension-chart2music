@@ -20,6 +20,91 @@ type DataZoomOption = {
   showDetail?: boolean;
 };
 
+const STACKED_TOTAL_OVERLAY_ID = "__chart2music_stacked_total_overlay__";
+
+const isInternalSeries = (series: unknown) =>
+  Boolean(
+    series &&
+      typeof series === "object" &&
+      (series as Record<string, unknown>).id === STACKED_TOTAL_OVERLAY_ID
+  );
+
+const publicOption = (option: Record<string, unknown>) => {
+  const sourceSeries = option.series;
+  const series = asArray(sourceSeries as Record<string, unknown> | Record<string, unknown>[]);
+  const visibleSeries = series.filter((item) => !isInternalSeries(item));
+
+  if (visibleSeries.length === series.length) {
+    return option;
+  }
+
+  return {
+    ...option,
+    series: Array.isArray(sourceSeries) ? visibleSeries : (visibleSeries[0] ?? [])
+  };
+};
+
+const numericBarValue = (value: unknown): number | null => {
+  if (typeof value === "number" && !Number.isNaN(value)) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return numericBarValue(value[value.length - 1]);
+  }
+  if (value && typeof value === "object") {
+    return numericBarValue((value as Record<string, unknown>).value);
+  }
+  return null;
+};
+
+const addStackedTotalOverlay = (chart: EChartsType, option: Record<string, unknown>, stacked: boolean) => {
+  if (!stacked) {
+    return undefined;
+  }
+
+  const series = asArray(option.series as Record<string, unknown> | Record<string, unknown>[]);
+  const stackedBars = series.filter((item) => {
+    if (item?.type !== "bar" || (typeof item?.stack !== "string" && typeof item?.stack !== "number")) {
+      return false;
+    }
+    const itemStyle = item.itemStyle as Record<string, unknown> | undefined;
+    return itemStyle?.opacity !== 0 && itemStyle?.color !== "transparent";
+  });
+  const length = Math.max(0, ...stackedBars.map((item) => asArray(item.data).length));
+
+  if (stackedBars.length < 2 || length === 0) {
+    return undefined;
+  }
+
+  const overlay = {
+    id: STACKED_TOTAL_OVERLAY_ID,
+    type: "bar",
+    data: Array.from({ length }, (_item, dataIndex) =>
+      stackedBars.reduce((total, item) => total + (numericBarValue(asArray(item.data)[dataIndex]) ?? 0), 0)
+    ),
+    silent: true,
+    tooltip: { show: false },
+    legendHoverLink: false,
+    barGap: "-100%",
+    z: 10,
+    itemStyle: {
+      color: "rgba(0, 0, 0, 0)",
+      borderColor: "transparent",
+      borderWidth: 0
+    },
+    emphasis: {
+      itemStyle: {
+        color: "rgba(0, 0, 0, 0)",
+        borderColor: "#000",
+        borderWidth: 2
+      }
+    }
+  };
+
+  chart.setOption({ series: [...series, overlay] });
+  return { seriesIndex: series.length };
+};
+
 const makeCCElement = (chart: EChartsType, provided?: HTMLElement | null) => {
   if (provided) {
     return provided;
@@ -66,7 +151,9 @@ const normalizeOpenCloseData = (data: unknown): unknown => {
 };
 
 const createDataSnapshot = (option: Record<string, unknown>) => {
-  const series = Array.isArray(option.series) ? option.series : [option.series];
+  const series = asArray(option.series as Record<string, unknown> | Record<string, unknown>[]).filter(
+    (item) => !isInternalSeries(item)
+  );
   const xAxis = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
 
   return JSON.stringify({
@@ -287,10 +374,41 @@ type HighlightState = {
 const highlightCurrentPoint = (
   chart: EChartsType,
   c2m: EChartsChart2MusicConnection["c2m"],
-  previous?: HighlightState
+  previous?: HighlightState,
+  totalOverlay?: { seriesIndex: number }
 ) => {
   const current = c2m.getCurrent();
   const custom = current.point?.custom;
+
+  if (current.group === "All" && totalOverlay) {
+    const dataIndex =
+      typeof current.point?.x === "number"
+        ? current.point.x
+        : custom && typeof custom === "object" && typeof (custom as { dataIndex?: unknown }).dataIndex === "number"
+          ? (custom as { dataIndex: number }).dataIndex
+          : undefined;
+    const pointKey = `All:${totalOverlay.seriesIndex}:${dataIndex}`;
+
+    if (dataIndex === undefined || pointKey === previous?.key) {
+      return previous;
+    }
+
+    chart.dispatchAction({
+      type: "downplay",
+      seriesIndex: previous?.seriesIndex ?? totalOverlay.seriesIndex
+    });
+    chart.dispatchAction({
+      type: "highlight",
+      seriesIndex: totalOverlay.seriesIndex,
+      dataIndex
+    });
+    chart.dispatchAction({
+      type: "showTip",
+      xAxisIndex: 0,
+      dataIndex
+    });
+    return { key: pointKey, seriesIndex: totalOverlay.seriesIndex };
+  }
 
   if (!custom || typeof custom !== "object") {
     return previous;
@@ -399,7 +517,7 @@ export const createEChartsMusic = (
   options: EChartsChart2MusicOptions = {}
 ): EChartsChart2MusicConnection | null => {
   let connection: EChartsChart2MusicConnection | null = null;
-  const initialOption = chart.getOption() as Record<string, unknown>;
+  const initialOption = publicOption(chart.getOption() as Record<string, unknown>);
   const config = echartsOptionToChart2MusicConfig(initialOption, options);
 
   if (!config) {
@@ -409,6 +527,7 @@ export const createEChartsMusic = (
   config.element = chart.getDom();
   config.cc = makeCCElement(chart, options.cc);
   const userOnFocusCallback = config.options?.onFocusCallback;
+  const totalOverlay = addStackedTotalOverlay(chart, initialOption, config.options?.stack === true);
   let lastHighlightedPoint: HighlightState | undefined;
   config.options = {
     ...config.options,
@@ -418,7 +537,8 @@ export const createEChartsMusic = (
         lastHighlightedPoint = highlightCurrentPoint(
           chart,
           connection.c2m,
-          lastHighlightedPoint
+          lastHighlightedPoint,
+          totalOverlay
         );
       }
       userOnFocusCallback?.(point);
@@ -448,7 +568,7 @@ export const createEChartsMusic = (
       if (disposed) {
         return;
       }
-      const nextOption = chart.getOption() as Record<string, unknown>;
+      const nextOption = publicOption(chart.getOption() as Record<string, unknown>);
       const nextDataSnapshot = createDataSnapshot(nextOption);
       if (nextDataSnapshot === lastDataSnapshot) {
         return;
