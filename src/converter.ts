@@ -34,6 +34,11 @@ const isBubbleSeries = (series: Record<string, unknown> | undefined) => {
     typeof series.symbolSize === "function";
 };
 
+const hasSliderDataZoom = (option: Record<string, unknown>) => {
+  return asArray(option.dataZoom as Record<string, unknown> | Record<string, unknown>[] | undefined)
+    .some((zoom) => zoom?.type === "slider");
+};
+
 const asArray = <T>(value: T | T[] | undefined): T[] => {
   if (value === undefined) {
     return [];
@@ -1118,6 +1123,16 @@ export const echartsOptionToChart2MusicConfig = (
   if (indexes.some((index) => isBubbleSeries(series[index]))) {
     options.errorCallback?.(
       "Unable to connect chart2music to ECharts: bubble plots are not supported."
+    );
+    return null;
+  }
+
+  if (hasSliderDataZoom(option)) {
+    const selectedType = typeof series[indexes[0] ?? 0]?.type === "string"
+      ? series[indexes[0] ?? 0]?.type
+      : "line";
+    options.errorCallback?.(
+      `Unable to connect chart2music to ECharts: ${selectedType} charts with slider data zoom overlays are not supported.`
     );
     return null;
   }

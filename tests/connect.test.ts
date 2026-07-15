@@ -297,127 +297,22 @@ describe("connect", () => {
     });
   });
 
-  it("bridges ECharts slider dataZoom to hidden range controls", () => {
-    const previousDocument = globalThis.document;
-    const createdElements: Array<HTMLElement & {
-      addEventListener: ReturnType<typeof vi.fn>;
-      value: string;
-      min: string;
-      max: string;
-      remove: ReturnType<typeof vi.fn>;
-    }> = [];
-    vi.stubGlobal("document", {
-      createElement: vi.fn((tagName: string) => {
-        const element = {
-          ...makeElement(),
-          tagName,
-          type: "",
-          min: "",
-          max: "",
-          step: "",
-          value: "",
-          addEventListener: vi.fn()
-        } as unknown as HTMLElement & {
-          addEventListener: ReturnType<typeof vi.fn>;
-          value: string;
-          min: string;
-          max: string;
-          remove: ReturnType<typeof vi.fn>;
-        };
-        createdElements.push(element);
-        return element;
-      })
-    });
-    const option = {
+  it("ignores charts with slider data zoom overlays without attaching ECharts hooks", () => {
+    const errorCallback = vi.fn();
+    const chart = makeChart({
       xAxis: { data: ["Mon", "Tue", "Wed"] },
       series: [{ type: "candlestick", data: [[20, 34, 10, 38], [34, 30, 28, 36], [30, 42, 29, 45]] }],
       dataZoom: [{ type: "inside" }, { type: "slider", start: -10, end: 125, bottom: 12, height: 28 }]
-    };
-    const chart = makeChart(option);
-    const dom = chart.getDom() as HTMLElement & { append: ReturnType<typeof vi.fn> };
-
-    const connection = connect(chart as unknown as Parameters<typeof connect>[0], { cc: makeElement() });
-    const startInput = createdElements.find((element) =>
-      (element.setAttribute as ReturnType<typeof vi.fn>).mock.calls.some((call) => call[1] === "Zoom start")
-    );
-    const endInput = createdElements.find((element) =>
-      (element.setAttribute as ReturnType<typeof vi.fn>).mock.calls.some((call) => call[1] === "Zoom end")
-    );
-    const dataZoomHandler = (chart.on as ReturnType<typeof vi.fn>).mock.calls.find((call) => call[0] === "datazoom")?.[1];
-
-    expect(connection).not.toBeNull();
-    expect(dom.style.position).toBe("relative");
-    expect(dom.append).toHaveBeenCalledWith(createdElements[0]);
-    expect(startInput?.value).toBe("0");
-    expect(endInput?.value).toBe("100");
-
-    startInput!.value = "80";
-    endInput!.value = "20";
-    (startInput!.addEventListener as ReturnType<typeof vi.fn>).mock.calls.find((call) => call[0] === "input")?.[1]();
-    expect(chart.dispatchAction).toHaveBeenCalledWith({
-      type: "dataZoom",
-      dataZoomIndex: 1,
-      start: 20,
-      end: 80
     });
 
-    (startInput!.addEventListener as ReturnType<typeof vi.fn>).mock.calls.find((call) => call[0] === "focus")?.[1]();
-    expect(chart.setOption).toHaveBeenCalledWith({
-      dataZoom: [
-        { type: "inside" },
-        {
-          type: "slider",
-          start: -10,
-          end: 125,
-          bottom: 12,
-          height: 28,
-          showDetail: true,
-          handleStyle: {
-            borderColor: "#18212f",
-            shadowBlur: 6,
-            shadowColor: "rgba(24, 33, 47, 0.35)"
-          }
-        }
-      ]
-    });
+    const connection = connect(chart as unknown as Parameters<typeof connect>[0], { errorCallback });
 
-    option.dataZoom = [{ type: "inside" }, { type: "slider", start: 33, end: 66, bottom: 12, height: 28 }];
-    dataZoomHandler?.();
-    expect(startInput?.value).toBe("33");
-    expect(endInput?.value).toBe("66");
-
-    const preventDefault = vi.fn();
-    const stopPropagation = vi.fn();
-    (startInput!.addEventListener as ReturnType<typeof vi.fn>).mock.calls
-      .find((call) => call[0] === "keydown")?.[1]({
-        key: "ArrowRight",
-        preventDefault,
-        stopPropagation
-      });
-    expect(startInput?.value).toBe("34");
-    expect(preventDefault).toHaveBeenCalled();
-    expect(stopPropagation).toHaveBeenCalled();
-    expect(chart.dispatchAction).toHaveBeenLastCalledWith({
-      type: "dataZoom",
-      dataZoomIndex: 1,
-      start: 34,
-      end: 66
-    });
-
-    (startInput!.addEventListener as ReturnType<typeof vi.fn>).mock.calls.find((call) => call[0] === "blur")?.[1]();
-    expect(chart.setOption).toHaveBeenLastCalledWith({
-      dataZoom: [
-        { type: "inside" },
-        { type: "slider", start: 33, end: 66, bottom: 12, height: 28, showDetail: undefined, handleStyle: {} }
-      ]
-    });
-
-    connection?.dispose();
-    expect(chart.off).toHaveBeenCalledWith("datazoom", dataZoomHandler);
-    expect(createdElements[0]?.remove).toHaveBeenCalled();
-    expect(dom.style.position).toBe("");
-
-    vi.stubGlobal("document", previousDocument);
+    expect(connection).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("slider data zoom overlays are not supported"));
+    expect(chart2MusicMock.c2mChart).not.toHaveBeenCalled();
+    expect(chart.on).not.toHaveBeenCalled();
+    expect(chart.off).not.toHaveBeenCalled();
+    expect(chart.dispatchAction).not.toHaveBeenCalled();
   });
 
   it("runs the caller's Chart2Music onFocusCallback after syncing the ECharts highlight", () => {

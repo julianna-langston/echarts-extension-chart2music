@@ -10,16 +10,6 @@ type EChartsTreeNode = {
   children?: EChartsTreeNode[];
 };
 
-type DataZoomOption = {
-  type?: string;
-  start?: number;
-  end?: number;
-  bottom?: number | string;
-  height?: number | string;
-  handleStyle?: Record<string, unknown>;
-  showDetail?: boolean;
-};
-
 const makeCCElement = (chart: EChartsType, provided?: HTMLElement | null) => {
   if (provided) {
     return provided;
@@ -92,158 +82,6 @@ const createDataSnapshot = (option: Record<string, unknown>) => {
       };
     })
   });
-};
-
-const toPercentValue = (value: unknown, fallback: number) => {
-  return typeof value === "number" && !Number.isNaN(value) ? Math.min(100, Math.max(0, value)) : fallback;
-};
-
-const setRangeAria = (input: HTMLInputElement) => {
-  input.setAttribute("aria-valuemin", input.min);
-  input.setAttribute("aria-valuemax", input.max);
-  input.setAttribute("aria-valuenow", input.value);
-};
-
-const createZoomRangeBridge = (chart: EChartsType) => {
-  const option = chart.getOption() as Record<string, unknown>;
-  const zooms = asArray(option.dataZoom as DataZoomOption | DataZoomOption[] | undefined);
-  const zoomIndex = zooms.findIndex((zoom) => zoom?.type === "slider");
-  const zoom = zoomIndex >= 0 ? zooms[zoomIndex] : undefined;
-
-  if (!zoom) {
-    return () => undefined;
-  }
-
-  const chartElement = chart.getDom();
-  const previousPosition = chartElement.style.position;
-  if (!previousPosition) {
-    chartElement.style.position = "relative";
-  }
-
-  const wrapper = document.createElement("div");
-  wrapper.setAttribute("aria-label", "Chart zoom range");
-  wrapper.style.position = "absolute";
-  wrapper.style.inset = "0";
-  wrapper.style.zIndex = "0";
-  wrapper.style.pointerEvents = "none";
-
-  const makeInput = (kind: "start" | "end", value: number) => {
-    const input = document.createElement("input");
-    input.type = "range";
-    input.min = "0";
-    input.max = "100";
-    input.step = "1";
-    input.value = String(Math.round(value));
-    input.setAttribute("aria-label", kind === "start" ? "Zoom start" : "Zoom end");
-    input.style.position = "absolute";
-    input.style.left = "0";
-    input.style.right = "0";
-    input.style.bottom = typeof zoom.bottom === "number" ? `${zoom.bottom}px` : (zoom.bottom ?? "10px");
-    input.style.height = typeof zoom.height === "number" ? `${zoom.height}px` : (zoom.height ?? "24px");
-    input.style.opacity = "0";
-    input.style.pointerEvents = "none";
-    setRangeAria(input);
-    return input;
-  };
-
-  const startInput = makeInput("start", toPercentValue(zoom.start, 0));
-  const endInput = makeInput("end", toPercentValue(zoom.end, 100));
-  wrapper.append(startInput, endInput);
-  chartElement.append(wrapper);
-
-  const updateChartZoom = () => {
-    const start = Math.min(Number(startInput.value), Number(endInput.value));
-    const end = Math.max(Number(startInput.value), Number(endInput.value));
-    startInput.value = String(start);
-    endInput.value = String(end);
-    setRangeAria(startInput);
-    setRangeAria(endInput);
-    chart.dispatchAction({
-      type: "dataZoom",
-      dataZoomIndex: zoomIndex,
-      start,
-      end
-    });
-  };
-
-  const updateFromKeyboard = (input: HTMLInputElement, event: KeyboardEvent) => {
-    const step = Number(input.step) || 1;
-    const minimum = Number(input.min);
-    const maximum = Number(input.max);
-    const current = Number(input.value);
-    const nextValue = {
-      ArrowDown: current - step,
-      ArrowLeft: current - step,
-      ArrowRight: current + step,
-      ArrowUp: current + step,
-      End: maximum,
-      Home: minimum,
-      PageDown: current - step * 10,
-      PageUp: current + step * 10
-    }[event.key];
-
-    if (nextValue === undefined) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    input.value = String(Math.min(maximum, Math.max(minimum, nextValue)));
-    updateChartZoom();
-  };
-
-  const syncFromChart = () => {
-    const nextOption = chart.getOption() as Record<string, unknown>;
-    const nextZoom = asArray(nextOption.dataZoom as DataZoomOption | DataZoomOption[] | undefined)[zoomIndex];
-    if (!nextZoom) {
-      return;
-    }
-    startInput.value = String(Math.round(toPercentValue(nextZoom.start, Number(startInput.value))));
-    endInput.value = String(Math.round(toPercentValue(nextZoom.end, Number(endInput.value))));
-    setRangeAria(startInput);
-    setRangeAria(endInput);
-  };
-
-  const initialHandleStyle = zoom.handleStyle ?? {};
-  const initialShowDetail = zoom.showDetail;
-  const setFocusedStyle = (focused: boolean) => {
-    const currentZooms = asArray(
-      (chart.getOption() as Record<string, unknown>).dataZoom as DataZoomOption | DataZoomOption[] | undefined
-    );
-    const nextZooms = currentZooms.map((item, index) =>
-      index === zoomIndex
-        ? {
-            ...item,
-            showDetail: focused ? true : initialShowDetail,
-            handleStyle: focused
-              ? {
-                  ...initialHandleStyle,
-                  borderColor: "#18212f",
-                  shadowBlur: 6,
-                  shadowColor: "rgba(24, 33, 47, 0.35)"
-                }
-              : initialHandleStyle
-          }
-        : item
-    );
-    chart.setOption({ dataZoom: nextZooms });
-  };
-
-  startInput.addEventListener("input", updateChartZoom);
-  endInput.addEventListener("input", updateChartZoom);
-  startInput.addEventListener("keydown", (event) => updateFromKeyboard(startInput, event));
-  endInput.addEventListener("keydown", (event) => updateFromKeyboard(endInput, event));
-  startInput.addEventListener("focus", () => setFocusedStyle(true));
-  endInput.addEventListener("focus", () => setFocusedStyle(true));
-  startInput.addEventListener("blur", () => setFocusedStyle(false));
-  endInput.addEventListener("blur", () => setFocusedStyle(false));
-  chart.on("datazoom", syncFromChart);
-
-  return () => {
-    chart.off("datazoom", syncFromChart);
-    wrapper.remove();
-    chartElement.style.position = previousPosition;
-  };
 };
 
 const asArray = <T>(value: T | T[] | undefined): T[] => {
@@ -439,7 +277,6 @@ export const createEChartsMusic = (
 
   let disposed = false;
   let lastDataSnapshot = createDataSnapshot(initialOption);
-  const cleanUpZoomRangeBridge = createZoomRangeBridge(chart);
 
   connection = {
     chart,
@@ -463,7 +300,6 @@ export const createEChartsMusic = (
     dispose: () => {
       disposed = true;
       chart.off("finished", connection?.update);
-      cleanUpZoomRangeBridge();
       data.cleanUp();
     }
   };
