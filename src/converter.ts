@@ -5,7 +5,9 @@ import type {
   EChartsMusicCandlestickPoint,
   EChartsMusicGroupData,
   EChartsMusicMatrixPoint,
-  EChartsMusicPoint
+  EChartsMusicOpenClosePoint,
+  EChartsMusicPoint,
+  EChartsMusicRangePoint
 } from "./types.js";
 
 type C2MSeriesType = Exclude<NonNullable<C2MChartConfig["type"]>, unknown[]>;
@@ -24,6 +26,12 @@ const echartsToC2MType: Record<string, C2MSeriesType> = {
   sunburst: "treemap",
   tree: "treemap",
   treemap: "treemap"
+};
+
+const isBubbleSeries = (series: Record<string, unknown> | undefined) => {
+  return series?.type === "scatter" &&
+    series.coordinateSystem === undefined &&
+    typeof series.symbolSize === "function";
 };
 
 const asArray = <T>(value: T | T[] | undefined): T[] => {
@@ -337,6 +345,13 @@ const getAxisCategoryLabels = (
     .map((value) => String(value));
 };
 
+const getAxisName = (
+  axis: Record<string, unknown> | Record<string, unknown>[] | undefined
+): string | undefined => {
+  const name = asArray(axis)[0]?.name;
+  return typeof name === "string" && name ? name : undefined;
+};
+
 const getCategoryLabels = (option: Record<string, unknown>): string[] => {
   return getAxisCategoryLabels(option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined);
 };
@@ -435,6 +450,78 @@ const isStackedBar = (series: Record<string, unknown>[], indexes: number[]) => {
   });
 
   return [...stacks.values()].some((count) => count > 1);
+};
+
+const floatingBarHelper = (
+  series: Record<string, unknown>[],
+  seriesIndex: number
+) => {
+  const item = series[seriesIndex];
+  const stack = item?.stack;
+  const hasStack = (typeof stack === "string" && stack.length > 0) || typeof stack === "number";
+
+  if (!item || item.type !== "bar" || !isVisibleSeries(item) || !hasStack) {
+    return undefined;
+  }
+
+  return series.find((candidate, candidateIndex) =>
+    candidateIndex !== seriesIndex &&
+    candidate?.type === "bar" &&
+    candidate.stack === stack &&
+    !isVisibleSeries(candidate)
+  );
+};
+
+const readFloatingBarPoint = (
+  raw: unknown,
+  offset: unknown,
+  dataIndex: number,
+  seriesIndex: number
+): EChartsMusicRangePoint | null => {
+  const start = getNumericY(offset);
+  const extent = getNumericY(raw);
+
+  if (start === null || extent === null) {
+    return null;
+  }
+
+  const end = start + extent;
+  return {
+    x: dataIndex,
+    low: Math.min(start, end),
+    high: Math.max(start, end),
+    custom: {
+      seriesIndex,
+      dataIndex
+    }
+  };
+};
+
+const isWaterfallBar = (data: unknown[]) => data.some((raw) => (getNumericY(raw) ?? 0) < 0);
+
+const readWaterfallBarPoint = (
+  raw: unknown,
+  offset: unknown,
+  dataIndex: number,
+  seriesIndex: number
+): EChartsMusicOpenClosePoint | null => {
+  const open = getNumericY(offset);
+  const change = getNumericY(raw);
+
+  if (open === null || change === null) {
+    return null;
+  }
+
+  const close = open + change;
+  return {
+    x: dataIndex,
+    open,
+    close,
+    custom: {
+      seriesIndex,
+      dataIndex
+    }
+  };
 };
 
 const createHierarchyData = (
@@ -632,7 +719,7 @@ const createBoxplotData = (
           : [];
 
     matchingGroups.forEach((groupName) => {
-      rawData.forEach((raw) => {
+      rawData.forEach((raw, dataIndex) => {
         const values = numericArrayFromData(raw);
         if (!values || !hasAtLeast(values, 2)) {
           return;
@@ -647,6 +734,10 @@ const createBoxplotData = (
         const box = groups[groupName]?.find((point) => point.x === x);
         if (box) {
           box.outlier = [...(box.outlier ?? []), outlier];
+          box.custom.outlierIndexes = [
+            ...(box.custom.outlierIndexes ?? []),
+            { seriesIndex, dataIndex }
+          ];
         }
       });
     });
@@ -734,11 +825,154 @@ const readHeatmapValue = (raw: unknown): unknown[] | null => {
   return Array.isArray(value) ? value : null;
 };
 
+const getHeatmapValue = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === "-") {
+    return Number.NaN;
+  }
+
+  return typeof value === "number" ? value : null;
+};
+
+const calendarDate = (value: unknown): Date | null => {
+  if (typeof value !== "string" && typeof value !== "number") {
+    return null;
+  }
+
+  const match = typeof value === "string" && /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value);
+  const date = match
+    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+    : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const addCalendarDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const calendarRange = (calendar: Record<string, unknown>, rawData: unknown[]) => {
+  const range = calendar.range;
+  const values = Array.isArray(range) ? range : range === undefined ? [] : [range];
+  const start = calendarDate(values[0]);
+  const end = calendarDate(values[1] ?? values[0]);
+
+  if (start && end) {
+    if (typeof values[0] === "string" && /^\d{4}$/.test(values[0])) {
+      return { start, end: new Date(start.getFullYear(), 11, 31) };
+    }
+    if (typeof values[0] === "string" && /^\d{4}-\d{1,2}$/.test(values[0])) {
+      return { start, end: new Date(start.getFullYear(), start.getMonth() + 1, 0) };
+    }
+    return start <= end ? { start, end } : { start: end, end: start };
+  }
+
+  const dates = rawData
+    .map(readHeatmapValue)
+    .map((values) => calendarDate(values?.[0]))
+    .filter((date): date is Date => date !== null)
+    .sort((a, b) => a.getTime() - b.getTime());
+  const first = dates[0];
+  const last = dates[dates.length - 1];
+  return first && last ? { start: first, end: last } : null;
+};
+
+const calendarWeekLabel = (date: Date) => {
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  return `Week of ${month} ${date.getDate()}`;
+};
+
+const createCalendarHeatmapData = (
+  option: Record<string, unknown>,
+  series: Record<string, unknown>[],
+  indexes: number[]
+) => {
+  const calendarIndexes = indexes.filter((index) => series[index]?.coordinateSystem === "calendar");
+  const firstIndex = calendarIndexes[0];
+  const firstSeries = firstIndex === undefined ? undefined : series[firstIndex];
+  const firstData = Array.isArray(firstSeries?.data) ? firstSeries.data : [];
+  const calendarOptions = asArray(option.calendar as Record<string, unknown> | Record<string, unknown>[]);
+  const calendarIndex = typeof firstSeries?.calendarIndex === "number" ? firstSeries.calendarIndex : 0;
+  const calendar = calendarOptions[calendarIndex] ?? {};
+  const range = calendarRange(calendar, firstData);
+
+  if (!range) {
+    return null;
+  }
+
+  const dayLabel = calendar.dayLabel as Record<string, unknown> | undefined;
+  const firstDay = typeof dayLabel?.firstDay === "number" ? dayLabel.firstDay : 0;
+  const orient = calendar.orient === "vertical" ? "vertical" : "horizontal";
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const orderedDays = Array.from({ length: 7 }, (_item, index) => dayNames[(firstDay + index) % 7] ?? String(index));
+  const startDay = (range.start.getDay() + 7 - firstDay) % 7;
+  const dayCount = Math.floor((range.end.getTime() - range.start.getTime()) / 86_400_000) + 1;
+  const weekCount = Math.floor((dayCount + startDay + 6) / 7);
+  const firstWeekStart = addCalendarDays(range.start, -startDay);
+  const weekLabels = Array.from({ length: weekCount }, (_item, index) =>
+    calendarWeekLabel(addCalendarDays(firstWeekStart, index * 7))
+  );
+  const multipleSeries = calendarIndexes.length > 1;
+  const groups: Record<string, EChartsMusicMatrixPoint[]> = {};
+  const labels = orient === "horizontal" ? weekLabels : orderedDays;
+
+  calendarIndexes.forEach((seriesIndex) => {
+    const item = series[seriesIndex];
+    const rawData = Array.isArray(item?.data) ? item.data : [];
+    const baseName = seriesName(item ?? {}, seriesIndex);
+    const rowLabels = orient === "horizontal" ? orderedDays : weekLabels;
+    const columnCount = labels.length;
+
+    rowLabels.forEach((rowLabel) => {
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      groups[groupName] = Array.from({ length: columnCount }, (_item, x) => ({
+        x,
+        y2: Number.NaN,
+        custom: { seriesIndex }
+      }));
+    });
+
+    rawData.forEach((raw, dataIndex) => {
+      const values = readHeatmapValue(raw);
+      const date = calendarDate(values?.[0]);
+      const value = getHeatmapValue(values?.[1]);
+      if (!date || value === null || date < range.start || date > range.end) {
+        return;
+      }
+
+      const daysFromStart = Math.floor((date.getTime() - range.start.getTime()) / 86_400_000);
+      const week = Math.floor((daysFromStart + startDay) / 7);
+      const day = (date.getDay() + 7 - firstDay) % 7;
+      const rowLabel = orient === "horizontal" ? orderedDays[day] : weekLabels[week];
+      const x = orient === "horizontal" ? week : day;
+      if (rowLabel === undefined || x < 0 || x >= columnCount) {
+        return;
+      }
+
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      groups[groupName]![x] = {
+        x,
+        y2: value,
+        custom: { seriesIndex, dataIndex }
+      };
+    });
+  });
+
+  return { data: groups, labels };
+};
+
 const createHeatmapData = (
   option: Record<string, unknown>,
   series: Record<string, unknown>[],
   indexes: number[]
 ) => {
+  if (indexes.some((index) => series[index]?.coordinateSystem === "calendar")) {
+    const calendar = createCalendarHeatmapData(option, series, indexes);
+    if (calendar) {
+      return calendar;
+    }
+  }
+
   const xLabels = getCategoryLabels(option);
   const yLabels = getAxisCategoryLabels(option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined);
   const labelIndexes = new Map<string, number>();
@@ -767,7 +1001,6 @@ const createHeatmapData = (
   indexes.forEach((seriesIndex) => {
     const item = series[seriesIndex];
     const rawData = Array.isArray(item?.data) ? item.data : [];
-    const isCalendar = item?.coordinateSystem === "calendar";
     const baseName = seriesName(item ?? {}, seriesIndex);
 
     rawData.forEach((raw, dataIndex) => {
@@ -776,29 +1009,11 @@ const createHeatmapData = (
         return;
       }
 
-      if (isCalendar) {
-        const rawX = values[0];
-        const rawValue = values[1];
-        if (typeof rawValue !== "number" || Number.isNaN(rawValue)) {
-          return;
-        }
-
-        const label = typeof rawX === "string" || typeof rawX === "number" ? String(rawX) : String(dataIndex);
-        addPoint(baseName, {
-          x: labelIndex(label),
-          y2: rawValue,
-          custom: {
-            seriesIndex,
-            dataIndex
-          }
-        });
-        return;
-      }
-
       const rawX = values[0];
       const rawY = values[1];
       const rawValue = values[2];
-      if (typeof rawValue !== "number" || Number.isNaN(rawValue)) {
+      const value = getHeatmapValue(rawValue);
+      if (value === null) {
         return;
       }
 
@@ -825,7 +1040,7 @@ const createHeatmapData = (
       const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
       addPoint(groupName, {
         x,
-        y2: rawValue,
+        y2: value,
         custom: {
           seriesIndex,
           dataIndex
@@ -834,8 +1049,45 @@ const createHeatmapData = (
     });
   });
 
+  indexes.forEach((seriesIndex) => {
+    const item = series[seriesIndex];
+    if (item?.type !== "heatmap" || item.coordinateSystem === "calendar") {
+      return;
+    }
+
+    const baseName = seriesName(item, seriesIndex);
+    yLabels.forEach((rowLabel, y) => {
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      const existing = new Map((groups[groupName] ?? []).map((point) => [point.x, point]));
+
+      groups[groupName] = labels.map((_, x) => existing.get(x) ?? {
+        x,
+        y2: Number.NaN,
+        custom: { seriesIndex }
+      });
+    });
+  });
+
+  const orderedGroups: Record<string, EChartsMusicMatrixPoint[]> = {};
+  indexes.forEach((seriesIndex) => {
+    const item = series[seriesIndex];
+    if (item?.type !== "heatmap" || item.coordinateSystem === "calendar") {
+      return;
+    }
+    const baseName = seriesName(item, seriesIndex);
+    [...yLabels].reverse().forEach((rowLabel) => {
+      const groupName = multipleSeries ? `${baseName}: ${rowLabel}` : rowLabel;
+      if (groups[groupName]) {
+        orderedGroups[groupName] = groups[groupName];
+      }
+    });
+  });
+  Object.entries(groups).forEach(([groupName, points]) => {
+    orderedGroups[groupName] ??= points;
+  });
+
   return {
-    data: groups,
+    data: orderedGroups,
     labels
   };
 };
@@ -859,6 +1111,13 @@ export const echartsOptionToChart2MusicConfig = (
   if (unsupportedType?.type) {
     options.errorCallback?.(
       `Unable to connect chart2music to ECharts: series type "${unsupportedType.type}" is not supported. Supported types are ${Object.keys(echartsToC2MType).join(", ")}.`
+    );
+    return null;
+  }
+
+  if (indexes.some((index) => isBubbleSeries(series[index]))) {
+    options.errorCallback?.(
+      "Unable to connect chart2music to ECharts: bubble plots are not supported."
     );
     return null;
   }
@@ -892,7 +1151,7 @@ export const echartsOptionToChart2MusicConfig = (
       ...(options.lang ? { lang: options.lang } : {}),
       type: "treemap",
       title: getTitle(option, options.title),
-      data: hierarchy.data,
+      data: hierarchy.data as C2MChartConfig["data"],
       ...(info ? { info } : {}),
       options: c2mOptions,
       axes: {
@@ -931,7 +1190,7 @@ export const echartsOptionToChart2MusicConfig = (
       ...(options.lang ? { lang: options.lang } : {}),
       type: "bar",
       title: getTitle(option, options.title),
-      data: funnel.data,
+      data: funnel.data as C2MChartConfig["data"],
       ...(info ? { info } : {}),
       ...(options.options && Object.keys(options.options).length ? { options: options.options } : {}),
       axes
@@ -990,7 +1249,7 @@ export const echartsOptionToChart2MusicConfig = (
       ...(options.lang ? { lang: options.lang } : {}),
       type: candlestick.type,
       title: getTitle(option, options.title),
-      data: candlestick.data,
+      data: candlestick.data as C2MChartConfig["data"],
       ...(mergedInfo ? { info: mergedInfo } : {}),
       ...(options.options && Object.keys(options.options).length ? { options: options.options } : {}),
       axes
@@ -1025,18 +1284,47 @@ export const echartsOptionToChart2MusicConfig = (
     };
   }
 
-  const categoryLabels = getCategoryLabels(option);
+  const xCategoryLabels = getCategoryLabels(option);
+  const yCategoryLabels = getAxisCategoryLabels(
+    option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
+  );
+  const categoryLabels = xCategoryLabels.length ? xCategoryLabels : yCategoryLabels;
+  const xAxisName = getAxisName(
+    option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
+  );
+  const yAxisName = getAxisName(
+    option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
+  );
+  const categoryAxisName = xCategoryLabels.length ? xAxisName : yAxisName;
+  const valueAxisName = xCategoryLabels.length ? yAxisName : xAxisName;
   const pieLabels =
     inferredType === "pie" && indexes.length === 1
       ? getDataItemNameLabels(firstSelectedSeries)
       : [];
   const labels = pieLabels.some(Boolean) ? pieLabels : categoryLabels;
   const groups: EChartsMusicGroupData = {};
+  const groupTypes: C2MSeriesType[] = [];
   const shouldUseAxisLabelsForPointNames = inferredType === "pie" && pieLabels.some(Boolean);
 
   indexes.forEach((seriesIndex) => {
     const item = series[seriesIndex];
     const data = Array.isArray(item?.data) ? item.data : [];
+    const helper = floatingBarHelper(series, seriesIndex);
+
+    if (item?.type === "bar" && !isVisibleSeries(item)) {
+      return;
+    }
+
+    if (helper) {
+      const offsets = Array.isArray(helper.data) ? helper.data : [];
+      const readPoint = isWaterfallBar(data) ? readWaterfallBarPoint : readFloatingBarPoint;
+      groups[seriesName(item ?? {}, seriesIndex)] = data
+        .map((raw, dataIndex) => readPoint(raw, offsets[dataIndex], dataIndex, seriesIndex))
+        .filter((point): point is EChartsMusicRangePoint | EChartsMusicOpenClosePoint => point !== null);
+      groupTypes.push("bar");
+      return;
+    }
+
     groups[seriesName(item ?? {}, seriesIndex)] = data
       .map((raw, dataIndex) =>
         readDataPoint(
@@ -1048,9 +1336,16 @@ export const echartsOptionToChart2MusicConfig = (
         )
       )
       .filter((point): point is EChartsMusicPoint => point !== null);
+    groupTypes.push(
+      echartsToC2MType[typeof item?.type === "string" ? item.type : "line"] ?? inferredType
+    );
   });
 
-  const data = indexes.length === 1 ? Object.values(groups)[0] ?? [] : groups;
+  const groupValues = Object.values(groups);
+  const data = groupValues.length === 1 ? groupValues[0] ?? [] : groups;
+  const type =
+    options.type ??
+    (groupTypes.length > 1 && new Set(groupTypes).size > 1 ? groupTypes : groupTypes[0] ?? inferredType);
   const info = createMarkInfo(series, indexes, labels);
   const c2mOptions = {
     ...options.options,
@@ -1059,14 +1354,16 @@ export const echartsOptionToChart2MusicConfig = (
   const axes = {
     x: {
       ...(labels.length ? { valueLabels: labels } : {}),
+      ...(categoryAxisName ? { label: categoryAxisName } : {}),
       ...options.axes?.x
-      },
-      y: {
-        format: (value: number) => value.toLocaleString(),
-        ...options.axes?.y
-      },
-      ...(options.axes?.y2 ? { y2: options.axes.y2 } : {})
-    };
+    },
+    y: {
+      format: (value: number) => value.toLocaleString(),
+      ...(valueAxisName ? { label: valueAxisName } : {}),
+      ...options.axes?.y
+    },
+    ...(options.axes?.y2 ? { y2: options.axes.y2 } : {})
+  };
   const mergedInfo = mergeInfo(options.info, info);
 
   return {
@@ -1074,9 +1371,9 @@ export const echartsOptionToChart2MusicConfig = (
     ...(options.cc ? { cc: options.cc } : {}),
     ...(options.audioEngine ? { audioEngine: options.audioEngine } : {}),
     ...(options.lang ? { lang: options.lang } : {}),
-    type: inferredType,
+    type,
     title: getTitle(option, options.title),
-    data,
+    data: data as C2MChartConfig["data"],
     ...(mergedInfo ? { info: mergedInfo } : {}),
     ...(Object.keys(c2mOptions).length ? { options: c2mOptions } : {}),
     axes

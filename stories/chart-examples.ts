@@ -1,205 +1,24 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>echarts-extension-chart2music all chart types</title>
-    <script type="importmap">
-      {
-        "imports": {
-          "chart2music": "../node_modules/chart2music/dist/index.mjs"
-        }
-      }
-    </script>
-    <style>
-      :root {
-        color-scheme: light;
-        --ink: #18212f;
-        --muted: #667085;
-        --line: #d8dee9;
-        --paper: #ffffff;
-        --wash: #f4f7fb;
-        --ok: #0f7b62;
-        --warn: #9b5f00;
-      }
+// Generated from the former all-chart-types gallery.
+// @ts-nocheck
 
-      * {
-        box-sizing: border-box;
-      }
+export type DemoExample = {
+  type: string;
+  category?: string;
+  title?: string;
+  storyArgs?: Record<string, unknown>;
+  option: Record<string, unknown>;
+};
 
-      body {
-        margin: 0;
-        background: var(--wash);
-        color: var(--ink);
-        font-family:
-          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
-      }
-
-      header {
-        border-bottom: 1px solid var(--line);
-        background: var(--paper);
-        padding: 20px clamp(16px, 4vw, 40px);
-      }
-
-      h1 {
-        margin: 0;
-        font-size: clamp(1.5rem, 2.4vw, 2.25rem);
-        font-weight: 720;
-        letter-spacing: 0;
-      }
-
-      .summary {
-        margin: 8px 0 0;
-        max-width: 900px;
-        color: var(--muted);
-        line-height: 1.45;
-      }
-
-      main {
-        padding: 22px clamp(16px, 4vw, 40px) 40px;
-      }
-
-      .gallery {
-        display: grid;
-        gap: 18px;
-      }
-
-      .category {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--paper);
-        overflow: hidden;
-      }
-
-      .category summary {
-        display: flex;
-        min-height: 58px;
-        cursor: pointer;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 14px 16px;
-        font-weight: 720;
-      }
-
-      .category summary::marker {
-        color: var(--muted);
-      }
-
-      .category-count {
-        color: var(--muted);
-        font-size: 0.84rem;
-        font-weight: 620;
-      }
-
-      .category-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
-        gap: 18px;
-        border-top: 1px solid var(--line);
-        padding: 16px;
-      }
-
-      .panel {
-        min-width: 0;
-        overflow: hidden;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--paper);
-      }
-
-      .panel-header {
-        display: flex;
-        min-height: 54px;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        border-bottom: 1px solid var(--line);
-        padding: 12px 14px;
-      }
-
-      .panel h2 {
-        margin: 0;
-        font-size: 0.98rem;
-        font-weight: 680;
-        letter-spacing: 0;
-      }
-
-      .badge {
-        flex: 0 0 auto;
-        border-radius: 999px;
-        padding: 4px 9px;
-        font-size: 0.75rem;
-        font-weight: 680;
-        white-space: nowrap;
-      }
-
-      .badge.supported {
-        background: #e5f5ef;
-        color: var(--ok);
-      }
-
-      .badge.unsupported {
-        background: #fff2d6;
-        color: var(--warn);
-      }
-
-      .chart {
-        width: 100%;
-        height: 300px;
-        overflow: hidden;
-      }
-
-      .cc {
-        min-height: 40px;
-        border-top: 1px solid var(--line);
-        padding: 10px 14px;
-        color: var(--muted);
-        font-size: 0.88rem;
-        line-height: 1.35;
-      }
-
-      @media (max-width: 520px) {
-        main {
-          padding-inline: 12px;
-        }
-
-        .chart {
-          height: 260px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>echarts-extension-chart2music chart type gallery</h1>
-      <p class="summary">
-        Every chart type exported by Apache ECharts 5.6 is rendered below. The
-        current Chart2Music adapter supports bar, line, pie, and scatter; other
-        panels show the visual ECharts option and report the current adapter
-        limitation in their caption area.
-      </p>
-    </header>
-    <main>
-      <div id="gallery" class="gallery"></div>
-    </main>
-    <script type="module">
-      import * as echarts from "../node_modules/echarts/dist/echarts.esm.mjs";
-      import extension, { connect } from "../dist/index.js";
-
-      echarts.use([extension]);
-
-      const supportedByChart2Music = new Set(["bar", "boxplot", "candlestick", "effectScatter", "funnel", "heatmap", "line", "pie", "scatter", "sunburst", "tree", "treemap"]);
+export const supportedByChart2Music = new Set(["bar", "boxplot", "candlestick", "effectScatter", "funnel", "heatmap", "line", "pie", "scatter", "sunburst", "tree", "treemap"]);
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
       const values = [12, 19, 15, 24, 18, 28];
       const cartesianGrid = { top: 24, right: 18, bottom: 24, left: 14, containLabel: true };
       const lineAxis = {
         grid: cartesianGrid,
-        xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+        xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
         yAxis: { type: "value" }
       };
-      const regionMap = {
+      export const regionMap = {
         type: "FeatureCollection",
         features: [
           {
@@ -228,10 +47,7 @@
           }
         ]
       };
-
-      echarts.registerMap("demo-regions", regionMap);
-
-      const optionsByType = [
+export const optionsByType = [
         {
           type: "line",
           title: "line: smooth",
@@ -345,10 +161,11 @@
         {
           type: "bar",
           title: "bar: basic",
+          storyArgs: { showLegend: false },
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
-            yAxis: { type: "value" },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
+            yAxis: { type: "value", name: "Revenue" },
             series: [{ name: "Revenue", type: "bar", data: values }]
           }
         },
@@ -358,7 +175,7 @@
           option: {
             grid: { ...cartesianGrid, top: 42 },
             legend: { top: 0, right: 8 },
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               { name: "North", type: "bar", data: [12, 18, 15, 20, 17, 23] },
@@ -371,9 +188,10 @@
           type: "bar",
           title: "bar: stacked",
           option: {
+            tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
             grid: { ...cartesianGrid, top: 42 },
             legend: { top: 0, right: 8 },
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               { name: "Email", type: "bar", stack: "Total", data: [6, 8, 9, 12, 10, 14] },
@@ -387,7 +205,7 @@
           title: "bar: floating range",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {
@@ -439,7 +257,7 @@
           option: {
             grid: { ...cartesianGrid, top: 42 },
             legend: { top: 0, right: 8 },
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: [
               { type: "value", name: "Sales" },
               { type: "value", name: "Rate" }
@@ -455,7 +273,7 @@
           title: "bar: data labels",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {
@@ -482,7 +300,7 @@
           title: "bar: negative values",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {
@@ -501,7 +319,7 @@
           title: "bar: background",
           option: {
             grid: cartesianGrid,
-            xAxis: { type: "category", data: months, axisLabel: { hideOverlap: true } },
+            xAxis: { type: "category", data: months, name: "Month", nameTextStyle: { color: "transparent" }, axisLabel: { hideOverlap: true } },
             yAxis: { type: "value" },
             series: [
               {
@@ -665,23 +483,6 @@
                   { name: "E", value: [5, 16, 18] },
                   { name: "F", value: [6, 23, 28] }
                 ]
-              }
-            ]
-          }
-        },
-        {
-          type: "scatter",
-          title: "scatter: bubble",
-          option: {
-            grid: cartesianGrid,
-            xAxis: {},
-            yAxis: {},
-            series: [
-              {
-                name: "Bubble samples",
-                type: "scatter",
-                symbolSize: (data) => Math.max(8, data[2] * 1.6),
-                data: [[1, 8, 5], [2, 12, 14], [3, 9, 8], [4, 18, 22], [5, 16, 16], [6, 23, 28]]
               }
             ]
           }
@@ -1450,7 +1251,8 @@
                 name: "MA",
                 type: "line",
                 smooth: true,
-                symbol: "none",
+                symbol: "circle",
+                symbolSize: 7,
                 data: [27, 32, 34, 35, 37, 40]
               }
             ]
@@ -1526,7 +1328,7 @@
             xAxis: { type: "category", data: ["A", "B", "C", "D"] },
             yAxis: { type: "category", data: ["W", "X", "Y", "Z"] },
             visualMap: { min: 0, max: 10, left: 10, bottom: 10 },
-            series: [{ type: "heatmap", data: [[0, 0, 5], [1, 0, 8], [2, 1, 3], [3, 2, 9], [1, 3, 6]] }]
+            series: [{ type: "heatmap", data: [[0, 0, 5], [1, 0, 8], [2, 0, "-"], [2, 1, 3], [0, 2, null], [3, 2, 9], [1, 3, 6]] }]
           }
         },
         {
@@ -1658,133 +1460,4 @@
         }
       ];
 
-      const gallery = document.getElementById("gallery");
-      const charts = [];
-      const chartGroups = new Map();
-      const detailsStatePrefix = "echarts-extension-chart2music:details:";
-      const getDetailsState = (chartType) => {
-        try {
-          return localStorage.getItem(`${detailsStatePrefix}${chartType}`);
-        } catch {
-          return null;
-        }
-      };
-      const setDetailsState = (chartType, isOpen) => {
-        try {
-          localStorage.setItem(`${detailsStatePrefix}${chartType}`, isOpen ? "open" : "closed");
-        } catch {
-          // Ignore storage errors; the demo still works without persistence.
-        }
-      };
-      const resizeChartToTile = (chart, element) => {
-        chart.resize({
-          width: element.clientWidth,
-          height: element.clientHeight
-        });
-      };
-      const resizeChartsIn = (root) => {
-        charts
-          .filter(({ element }) => root.contains(element))
-          .forEach(({ chart, element }) => resizeChartToTile(chart, element));
-      };
-
-      optionsByType.forEach((example) => {
-        const groupKey = example.category ?? example.type;
-        const group = chartGroups.get(groupKey) ?? [];
-        group.push(example);
-        chartGroups.set(groupKey, group);
-      });
-
-      chartGroups.forEach((examples, chartType) => {
-        const category = document.createElement("details");
-        category.className = "category";
-        category.open = getDetailsState(chartType) !== "closed";
-        category.innerHTML = `
-          <summary>
-            <span>${chartType}</span>
-            <span class="category-count">${examples.length} ${examples.length === 1 ? "example" : "examples"}</span>
-          </summary>
-          <div class="category-grid"></div>
-        `;
-
-        gallery.append(category);
-        const categoryGrid = category.querySelector(".category-grid");
-
-        category.addEventListener("toggle", () => {
-          setDetailsState(chartType, category.open);
-          if (category.open) {
-            requestAnimationFrame(() => resizeChartsIn(category));
-          }
-        });
-
-        examples.forEach(({ type, title, option }) => {
-          const displayTitle = title ?? type;
-          const panel = document.createElement("section");
-          panel.className = "panel";
-          panel.innerHTML = `
-            <div class="panel-header">
-              <h2>${displayTitle}</h2>
-              <span class="badge ${supportedByChart2Music.has(type) ? "supported" : "unsupported"}">
-                ${supportedByChart2Music.has(type) ? "sonified" : "visual only"}
-              </span>
-            </div>
-            <div class="chart" aria-label="${displayTitle} chart"></div>
-            <div class="cc" aria-live="polite"></div>
-          `;
-
-          categoryGrid.append(panel);
-
-          const chartElement = panel.querySelector(".chart");
-          const cc = panel.querySelector(".cc");
-          const chart = echarts.init(chartElement, null, {
-            renderer: "canvas",
-            devicePixelRatio: 1,
-            width: chartElement.clientWidth,
-            height: chartElement.clientHeight
-          });
-          chart.setOption({
-            animation: false,
-            tooltip: {},
-            title: { text: displayTitle, show: false },
-            ...option
-          });
-
-          try {
-            const music = connect(chart, {
-              cc,
-              errorCallback: (message) => {
-                cc.textContent = message;
-              }
-            });
-
-            if (music) {
-              cc.textContent = "Chart2Music controls are attached to this chart.";
-            }
-          } catch (error) {
-            cc.textContent = error instanceof Error ? error.message : String(error);
-          }
-
-          resizeChartToTile(chart, chartElement);
-          charts.push({ chart, element: chartElement });
-        });
-      });
-
-      if ("ResizeObserver" in window) {
-        const observer = new ResizeObserver((entries) => {
-          entries.forEach((entry) => {
-            const item = charts.find(({ element }) => element === entry.target);
-            if (item) {
-              resizeChartToTile(item.chart, item.element);
-            }
-          });
-        });
-
-        charts.forEach(({ element }) => observer.observe(element));
-      } else {
-        window.addEventListener("resize", () => {
-          charts.forEach(({ chart, element }) => resizeChartToTile(chart, element));
-        });
-      }
-    </script>
-  </body>
-</html>
+      

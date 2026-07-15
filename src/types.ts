@@ -42,9 +42,31 @@ export type EChartsMusicPoint = {
 
 export type EChartsMusicDataPoint =
   | EChartsMusicPoint
+  | EChartsMusicRangePoint
+  | EChartsMusicOpenClosePoint
   | EChartsMusicBoxPoint
   | EChartsMusicCandlestickPoint
   | EChartsMusicMatrixPoint;
+
+export type EChartsMusicRangePoint = {
+  x: number;
+  high: number;
+  low: number;
+  custom: {
+    seriesIndex: number;
+    dataIndex: number;
+  };
+};
+
+export type EChartsMusicOpenClosePoint = {
+  x: number;
+  open: number;
+  close: number;
+  custom: {
+    seriesIndex: number;
+    dataIndex: number;
+  };
+};
 
 export type EChartsMusicBoxPoint = {
   x: number;
@@ -57,6 +79,10 @@ export type EChartsMusicBoxPoint = {
   custom: {
     seriesIndex: number;
     dataIndex: number;
+    outlierIndexes?: Array<{
+      seriesIndex: number;
+      dataIndex: number;
+    }>;
   };
 };
 
@@ -77,7 +103,7 @@ export type EChartsMusicMatrixPoint = {
   y2: number;
   custom: {
     seriesIndex: number;
-    dataIndex: number;
+    dataIndex?: number;
   };
 };
 

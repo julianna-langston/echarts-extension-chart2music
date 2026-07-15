@@ -184,6 +184,22 @@ describe("echartsOptionToChart2MusicConfig", () => {
     });
   });
 
+  it("preserves types for mixed bar and line series", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { data: ["A", "B"] },
+      series: [
+        { name: "Sales", type: "bar", data: [12, 19] },
+        { name: "Conversion", type: "line", data: [3, 4] }
+      ]
+    });
+
+    expect(config?.type).toEqual(["bar", "line"]);
+    expect(config?.data).toMatchObject({
+      Sales: expect.arrayContaining([{ x: 0, y: 12, custom: { seriesIndex: 0, dataIndex: 0 } }]),
+      Conversion: expect.arrayContaining([{ x: 0, y: 3, custom: { seriesIndex: 1, dataIndex: 0 } }])
+    });
+  });
+
   it("enables Chart2Music stacking for stacked bar series", () => {
     const config = echartsOptionToChart2MusicConfig({
       xAxis: { data: ["A", "B"] },
@@ -197,7 +213,7 @@ describe("echartsOptionToChart2MusicConfig", () => {
     expect(config?.options?.stack).toBe(true);
   });
 
-  it("does not enable Chart2Music stacking for floating bar helper series", () => {
+  it("converts floating bars into low and high values without Chart2Music stacking", () => {
     const config = echartsOptionToChart2MusicConfig({
       xAxis: { data: ["A", "B"] },
       series: [
@@ -214,6 +230,35 @@ describe("echartsOptionToChart2MusicConfig", () => {
 
     expect(config?.type).toBe("bar");
     expect(config?.options?.stack).toBeUndefined();
+    expect(config?.data).toEqual([
+      { x: 0, low: 3, high: 11, custom: { seriesIndex: 1, dataIndex: 0 } },
+      { x: 1, low: 5, high: 15, custom: { seriesIndex: 1, dataIndex: 1 } }
+    ]);
+  });
+
+  it("converts waterfall bars into open and close values without Chart2Music stacking", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { data: ["Start", "Sales", "Costs", "End"] },
+      series: [
+        {
+          name: "Base",
+          type: "bar",
+          stack: "total",
+          itemStyle: { color: "transparent" },
+          data: [0, 20, 35, 0]
+        },
+        { name: "Change", type: "bar", stack: "total", data: [20, 15, -13, 22] }
+      ]
+    });
+
+    expect(config?.type).toBe("bar");
+    expect(config?.options?.stack).toBeUndefined();
+    expect(config?.data).toEqual([
+      { x: 0, open: 0, close: 20, custom: { seriesIndex: 1, dataIndex: 0 } },
+      { x: 1, open: 20, close: 35, custom: { seriesIndex: 1, dataIndex: 1 } },
+      { x: 2, open: 35, close: 22, custom: { seriesIndex: 1, dataIndex: 2 } },
+      { x: 3, open: 0, close: 22, custom: { seriesIndex: 1, dataIndex: 3 } }
+    ]);
   });
 
   it("uses pie data item names as x-axis labels", () => {
@@ -390,7 +435,7 @@ describe("echartsOptionToChart2MusicConfig", () => {
         q3: 14,
         high: 18,
         outlier: [24],
-        custom: { seriesIndex: 0, dataIndex: 0 }
+        custom: { seriesIndex: 0, dataIndex: 0, outlierIndexes: [{ seriesIndex: 1, dataIndex: 0 }] }
       },
       {
         x: 1,
@@ -400,7 +445,11 @@ describe("echartsOptionToChart2MusicConfig", () => {
         q3: 16,
         high: 21,
         outlier: [3, 27],
-        custom: { seriesIndex: 0, dataIndex: 1 }
+        custom: {
+          seriesIndex: 0,
+          dataIndex: 1,
+          outlierIndexes: [{ seriesIndex: 1, dataIndex: 1 }, { seriesIndex: 1, dataIndex: 2 }]
+        }
       }
     ]);
   });
@@ -663,16 +712,39 @@ describe("echartsOptionToChart2MusicConfig", () => {
     expect(config?.type).toBe("matrix");
     expect(config?.axes?.x?.valueLabels).toEqual(["A", "B"]);
     expect(config?.data).toEqual({
+      "Row 2": [
+        { x: 0, y2: 3, custom: { seriesIndex: 0, dataIndex: 2 } },
+        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0 } }
+      ],
       "Row 1": [
         { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
         { x: 1, y2: 8, custom: { seriesIndex: 0, dataIndex: 1 } }
-      ],
-      "Row 2": [{ x: 0, y2: 3, custom: { seriesIndex: 0, dataIndex: 2 } }]
+      ]
     });
   });
 
-  it("converts calendar heatmap data to a single Chart2Music matrix group", () => {
+  it("represents absent and explicitly missing heatmap cells as missing values", () => {
     const config = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "category", data: ["A", "B"] },
+      yAxis: { type: "category", data: ["Row 1", "Row 2"] },
+      series: [{ type: "heatmap", data: [[0, 0, 5], [1, 0, "-"], [0, 1, null]] }]
+    });
+
+    expect(config?.data).toEqual({
+      "Row 2": [
+        { x: 0, y2: Number.NaN, custom: { seriesIndex: 0, dataIndex: 2 } },
+        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0 } }
+      ],
+      "Row 1": [
+        { x: 0, y2: 5, custom: { seriesIndex: 0, dataIndex: 0 } },
+        { x: 1, y2: Number.NaN, custom: { seriesIndex: 0, dataIndex: 1 } }
+      ]
+    });
+  });
+
+  it("converts calendar heatmaps into weekday rows and week columns", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      calendar: { range: ["2026-01-01", "2026-01-02"] },
       series: [
         {
           name: "Calendar",
@@ -684,13 +756,42 @@ describe("echartsOptionToChart2MusicConfig", () => {
     });
 
     expect(config?.type).toBe("matrix");
-    expect(config?.axes?.x?.valueLabels).toEqual(["2026-01-01", "2026-01-02"]);
+    expect(config?.axes?.x?.valueLabels).toEqual(["Week of Dec 28"]);
     expect(config?.data).toEqual({
-      Calendar: [
+      Sunday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Monday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Tuesday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Wednesday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }],
+      Thursday: [
         { x: 0, y2: 10, custom: { seriesIndex: 0, dataIndex: 0 } },
-        { x: 1, y2: 15, custom: { seriesIndex: 0, dataIndex: 1 } }
+      ],
+      Friday: [
+        { x: 0, y2: 15, custom: { seriesIndex: 0, dataIndex: 1 } }
+      ],
+      Saturday: [{ x: 0, y2: Number.NaN, custom: { seriesIndex: 0 } }]
+    });
+  });
+
+  it("keeps calendar heatmap rows aligned across weeks", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      calendar: { range: ["2026-01-01", "2026-01-10"] },
+      series: [
+        {
+          type: "heatmap",
+          coordinateSystem: "calendar",
+          data: [["2026-01-01", 10], ["2026-01-04", 20]]
+        }
       ]
     });
+    const rows = config?.data as Record<string, Array<{ x: number; y2: number }>>;
+
+    expect(config?.axes?.x?.valueLabels).toEqual(["Week of Dec 28", "Week of Jan 4"]);
+    expect(Object.keys(rows)).toEqual([
+      "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+    ]);
+    expect(Object.values(rows).every((row) => row.length === 2)).toBe(true);
+    expect(rows.Thursday?.[0]).toMatchObject({ x: 0, y2: 10 });
+    expect(rows.Sunday?.[1]).toMatchObject({ x: 1, y2: 20 });
   });
 
   it("converts ECharts line marks into Chart2Music annotations", () => {
@@ -949,5 +1050,26 @@ describe("echartsOptionToChart2MusicConfig", () => {
 
     expect(config).toBeNull();
     expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("radar"));
+  });
+
+  it("rejects bubble plots without changing the ECharts chart", () => {
+    const errorCallback = vi.fn();
+    const config = echartsOptionToChart2MusicConfig(
+      {
+        xAxis: {},
+        yAxis: {},
+        series: [
+          {
+            type: "scatter",
+            symbolSize: (point: number[]) => point[2],
+            data: [[1, 8, 5], [2, 12, 14]]
+          }
+        ]
+      },
+      { errorCallback }
+    );
+
+    expect(config).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("bubble plots are not supported"));
   });
 });
