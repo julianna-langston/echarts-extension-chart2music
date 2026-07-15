@@ -5,7 +5,6 @@ import type {
   EChartsMusicCandlestickPoint,
   EChartsMusicGroupData,
   EChartsMusicMatrixPoint,
-  EChartsMusicOpenClosePoint,
   EChartsMusicPoint,
   EChartsMusicRangePoint
 } from "./types.js";
@@ -502,31 +501,24 @@ const readFloatingBarPoint = (
   };
 };
 
-const isWaterfallBar = (data: unknown[]) => data.some((raw) => (getNumericY(raw) ?? 0) < 0);
+const isWaterfallBar = (series: Record<string, unknown>[], indexes: number[]) => {
+  return indexes.some((seriesIndex) => {
+    const item = series[seriesIndex];
+    const stack = item?.stack;
+    const hasStack = (typeof stack === "string" && stack.length > 0) || typeof stack === "number";
 
-const readWaterfallBarPoint = (
-  raw: unknown,
-  offset: unknown,
-  dataIndex: number,
-  seriesIndex: number
-): EChartsMusicOpenClosePoint | null => {
-  const open = getNumericY(offset);
-  const change = getNumericY(raw);
-
-  if (open === null || change === null) {
-    return null;
-  }
-
-  const close = open + change;
-  return {
-    x: dataIndex,
-    open,
-    close,
-    custom: {
-      seriesIndex,
-      dataIndex
+    if (!item || item.type !== "bar" || !hasStack) {
+      return false;
     }
-  };
+
+    const stackSeries = series.filter((candidate) => candidate?.type === "bar" && candidate.stack === stack);
+
+    return stackSeries.some((candidate) => !isVisibleSeries(candidate)) &&
+      stackSeries.some((candidate) => {
+        const data = Array.isArray(candidate.data) ? candidate.data : [];
+        return isVisibleSeries(candidate) && data.some((raw) => (getNumericY(raw) ?? 0) < 0);
+      });
+  });
 };
 
 const createHierarchyData = (
@@ -1137,6 +1129,13 @@ export const echartsOptionToChart2MusicConfig = (
     return null;
   }
 
+  if (isWaterfallBar(series, indexes)) {
+    options.errorCallback?.(
+      "Unable to connect chart2music to ECharts: waterfall bar charts are not supported."
+    );
+    return null;
+  }
+
   const firstSelectedSeries = series[indexes[0] ?? 0];
   const inferredType =
     options.type ??
@@ -1332,10 +1331,9 @@ export const echartsOptionToChart2MusicConfig = (
 
     if (helper) {
       const offsets = Array.isArray(helper.data) ? helper.data : [];
-      const readPoint = isWaterfallBar(data) ? readWaterfallBarPoint : readFloatingBarPoint;
       groups[seriesName(item ?? {}, seriesIndex)] = data
-        .map((raw, dataIndex) => readPoint(raw, offsets[dataIndex], dataIndex, seriesIndex))
-        .filter((point): point is EChartsMusicRangePoint | EChartsMusicOpenClosePoint => point !== null);
+        .map((raw, dataIndex) => readFloatingBarPoint(raw, offsets[dataIndex], dataIndex, seriesIndex))
+        .filter((point): point is EChartsMusicRangePoint => point !== null);
       groupTypes.push("bar");
       return;
     }

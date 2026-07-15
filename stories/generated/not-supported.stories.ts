@@ -27,6 +27,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
+export const BarWaterfall: Story = { name: "bar: waterfall", args: {"title":"bar: waterfall"}, render: (args) => createEChartsExample(getExample("bar: waterfall"), false, args) };
 export const RadarBasic: Story = { name: "radar: basic", args: {"title":"radar: basic"}, render: (args) => createEChartsExample(getExample("radar: basic"), false, args) };
 export const RadarMultipleProfiles: Story = { name: "radar: multiple profiles", args: {"title":"radar: multiple profiles"}, render: (args) => createEChartsExample(getExample("radar: multiple profiles"), false, args) };
 export const RadarDifferentRanges: Story = { name: "radar: different ranges", args: {"title":"radar: different ranges"}, render: (args) => createEChartsExample(getExample("radar: different ranges"), false, args) };

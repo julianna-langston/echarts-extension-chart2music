@@ -169,16 +169,15 @@ describe("demo chart examples", () => {
     expect(stacked?.option.tooltip).toEqual({ trigger: "axis", axisPointer: { type: "shadow" } });
   });
 
-  it("represents demo waterfall bars with open and close values", () => {
+  it("marks the demo waterfall chart as unsupported", () => {
     const waterfall = supportedExamples.find((example) => example.title === "bar: waterfall");
 
-    expect(waterfall && echartsOptionToChart2MusicConfig(waterfall.option)?.data).toEqual([
-      { x: 0, open: 0, close: 20, custom: { seriesIndex: 1, dataIndex: 0 } },
-      { x: 1, open: 20, close: 35, custom: { seriesIndex: 1, dataIndex: 1 } },
-      { x: 2, open: 35, close: 22, custom: { seriesIndex: 1, dataIndex: 2 } },
-      { x: 3, open: 22, close: 17, custom: { seriesIndex: 1, dataIndex: 3 } },
-      { x: 4, open: 0, close: 17, custom: { seriesIndex: 1, dataIndex: 4 } }
-    ]);
+    expect(waterfall).toBeUndefined();
+    const visualOnlyWaterfall = visualOnlyExamples.find((example) => example.title === "bar: waterfall");
+    const errorCallback = vi.fn();
+
+    expect(visualOnlyWaterfall && echartsOptionToChart2MusicConfig(visualOnlyWaterfall.option, { errorCallback })).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("waterfall bar charts are not supported"));
   });
 
   it("preserves bar and line types in the demo bar-line chart", () => {
