@@ -1,6 +1,5 @@
 import c2mChart from "chart2music";
 import type { EChartsType } from "echarts/core";
-import type { C2MChartConfig } from "chart2music";
 import { echartsOptionToChart2MusicConfig } from "./converter.js";
 import type { EChartsChart2MusicConnection, EChartsChart2MusicOptions } from "./types.js";
 
@@ -28,41 +27,6 @@ const makeCCElement = (chart: EChartsType, provided?: HTMLElement | null) => {
   const cc = document.createElement("div");
   chart.getDom().insertAdjacentElement("afterend", cc);
   return cc;
-};
-
-const normalizeOpenCloseData = (data: unknown): unknown => {
-  const normalizePoint = (point: unknown) => {
-    if (!point || typeof point !== "object" || Array.isArray(point)) {
-      return point;
-    }
-    const value = point as Record<string, unknown>;
-    if (
-      typeof value.open === "number" &&
-      typeof value.close === "number" &&
-      !("low" in value) &&
-      !("high" in value)
-    ) {
-      return {
-        ...value,
-        low: Math.min(value.open, value.close),
-        high: Math.max(value.open, value.close)
-      };
-    }
-    return value;
-  };
-
-  if (Array.isArray(data)) {
-    return data.map(normalizePoint);
-  }
-  if (data && typeof data === "object") {
-    return Object.fromEntries(
-      Object.entries(data as Record<string, unknown>).map(([group, points]) => [
-        group,
-        Array.isArray(points) ? points.map(normalizePoint) : points
-      ])
-    );
-  }
-  return data;
 };
 
 const createDataSnapshot = (option: Record<string, unknown>) => {
@@ -427,7 +391,7 @@ export const createEChartsMusic = (
 
   const { err, data } = c2mChart({
     ...config,
-    data: normalizeOpenCloseData(config.data) as C2MChartConfig["data"]
+    data: config.data
   });
   if (err) {
     options.errorCallback?.(err);
