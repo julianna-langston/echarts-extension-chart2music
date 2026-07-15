@@ -30,4 +30,3 @@ type Story = StoryObj<EChartsStoryOptions>;
 export const Basic: Story = { name: "basic", args: {"title":"candlestick: basic"}, render: (args) => createEChartsExample(getExample("candlestick: basic"), true, args) };
 export const MovingAverage: Story = { name: "moving average", args: {"title":"candlestick: moving average"}, render: (args) => createEChartsExample(getExample("candlestick: moving average"), true, args) };
 export const Volume: Story = { name: "volume", args: {"title":"candlestick: volume"}, render: (args) => createEChartsExample(getExample("candlestick: volume"), true, args) };
-export const MarksAndZoom: Story = { name: "marks and zoom", args: {"title":"candlestick: marks and zoom"}, render: (args) => createEChartsExample(getExample("candlestick: marks and zoom"), true, args) };

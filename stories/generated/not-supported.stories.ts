@@ -42,6 +42,7 @@ export const GaugeMultiPointer: Story = { name: "gauge: multi pointer", args: {"
 export const GaugeSpeedometer: Story = { name: "gauge: speedometer", args: {"title":"gauge: speedometer"}, render: (args) => createEChartsExample(getExample("gauge: speedometer"), false, args) };
 export const Parallel: Story = { name: "parallel", args: {"title":"parallel"}, render: (args) => createEChartsExample(getExample("parallel"), false, args) };
 export const Sankey: Story = { name: "sankey", args: {"title":"sankey"}, render: (args) => createEChartsExample(getExample("sankey"), false, args) };
+export const CandlestickMarksAndZoom: Story = { name: "candlestick: marks and zoom", args: {"title":"candlestick: marks and zoom"}, render: (args) => createEChartsExample(getExample("candlestick: marks and zoom"), false, args) };
 export const Lines: Story = { name: "lines", args: {"title":"lines"}, render: (args) => createEChartsExample(getExample("lines"), false, args) };
 export const PictorialBarRepeat: Story = { name: "pictorialBar: repeat", args: {"title":"pictorialBar: repeat"}, render: (args) => createEChartsExample(getExample("pictorialBar: repeat"), false, args) };
 export const PictorialBarSymbols: Story = { name: "pictorialBar: symbols", args: {"title":"pictorialBar: symbols"}, render: (args) => createEChartsExample(getExample("pictorialBar: symbols"), false, args) };

@@ -15,6 +15,9 @@ const { optionsByType, supportedByChart2Music } = Function(
 )();
 
 const sectionFor = (example) => {
+  if (example.category === "not-supported") {
+    return "Not Supported";
+  }
   if (!supportedByChart2Music.has(example.type)) {
     return "Not Supported";
   }

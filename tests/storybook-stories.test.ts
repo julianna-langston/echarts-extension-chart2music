@@ -47,7 +47,7 @@ describe("generated Storybook examples", () => {
       ? [...visualOnly.matchAll(/name: ("(?:[^"\\]|\\.)*")/g)].map((match) => JSON.parse(match[1] ?? "\"\""))
       : [];
     const expectedVisualOnlyNames = optionsByType
-      .filter((example) => !supportedByChart2Music.has(example.type))
+      .filter((example) => !supportedByChart2Music.has(example.type) || example.category === "not-supported")
       .map((example) => example.title ?? example.type);
 
     expect(visualOnlyNames).toEqual(expectedVisualOnlyNames);

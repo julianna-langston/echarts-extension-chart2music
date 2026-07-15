@@ -3,8 +3,11 @@ import { echartsOptionToChart2MusicConfig } from "../src/converter";
 import { loadDemoExamples } from "./demoExamples";
 
 const { optionsByType, supportedByChart2Music } = loadDemoExamples();
-const supportedExamples = optionsByType.filter((example) => supportedByChart2Music.has(example.type));
-const visualOnlyExamples = optionsByType.filter((example) => !supportedByChart2Music.has(example.type));
+const isSupportedExample = (example: { type: string; category?: string }) => {
+  return supportedByChart2Music.has(example.type) && example.category !== "not-supported";
+};
+const supportedExamples = optionsByType.filter(isSupportedExample);
+const visualOnlyExamples = optionsByType.filter((example) => !isSupportedExample(example));
 const adapterUnsupportedExamples = visualOnlyExamples.filter((example) => {
   return echartsOptionToChart2MusicConfig(example.option) === null;
 });
@@ -43,6 +46,14 @@ describe("demo chart examples", () => {
     expect(adapterUnsupportedExamples.map((example) => example.type)).toEqual(
       expect.arrayContaining(["gauge", "radar", "sankey"])
     );
+  });
+
+  it("marks the slider zoom demo as unsupported", () => {
+    const zoomDemo = visualOnlyExamples.find((example) => example.title === "candlestick: marks and zoom");
+    const errorCallback = vi.fn();
+
+    expect(zoomDemo && echartsOptionToChart2MusicConfig(zoomDemo.option, { errorCallback })).toBeNull();
+    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("slider data zoom overlays are not supported"));
   });
 
   it.each(supportedExamples.map((example) => [chartName(example), example] as const))(
