@@ -128,6 +128,40 @@ describe("connect", () => {
     expect(chart.on).toHaveBeenCalledWith("finished", connection?.update);
   });
 
+  it("passes waterfall bars to Chart2Music with only open and close values", () => {
+    const chart = makeChart({
+      xAxis: { data: ["Start", "Sales", "Costs"] },
+      series: [
+        {
+          name: "Base",
+          type: "bar",
+          stack: "total",
+          itemStyle: { color: "transparent" },
+          data: [0, 20, 35]
+        },
+        { name: "Change", type: "bar", stack: "total", data: [20, 15, -13] }
+      ]
+    });
+
+    connect(chart as unknown as Parameters<typeof connect>[0], { cc: makeElement() });
+
+    expect(chart2MusicMock.c2mChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: [
+          { x: 0, open: 0, close: 20, custom: { seriesIndex: 1, dataIndex: 0 } },
+          { x: 1, open: 20, close: 35, custom: { seriesIndex: 1, dataIndex: 1 } },
+          { x: 2, open: 35, close: 22, custom: { seriesIndex: 1, dataIndex: 2 } }
+        ]
+      })
+    );
+    const chart2MusicConfig = chart2MusicMock.c2mChart.mock.calls[0]?.[0] as {
+      data: Array<Record<string, unknown>>;
+    };
+    const data = chart2MusicConfig.data;
+    expect(data[0]).not.toHaveProperty("low");
+    expect(data[0]).not.toHaveProperty("high");
+  });
+
   it("updates Chart2Music data after the ECharts series changes", () => {
     const cc = makeElement();
     const option = {
