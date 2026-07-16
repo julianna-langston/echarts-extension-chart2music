@@ -1280,7 +1280,6 @@ export const optionsByType = [
         },
         {
           type: "candlestick",
-          category: "not-supported",
           title: "candlestick: marks and zoom",
           option: {
             tooltip: { trigger: "axis" },

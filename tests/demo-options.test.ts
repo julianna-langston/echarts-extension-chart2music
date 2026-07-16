@@ -48,12 +48,12 @@ describe("demo chart examples", () => {
     );
   });
 
-  it("marks the slider zoom demo as unsupported", () => {
-    const zoomDemo = visualOnlyExamples.find((example) => example.title === "candlestick: marks and zoom");
+  it("converts the slider zoom demo", () => {
+    const zoomDemo = supportedExamples.find((example) => example.title === "candlestick: marks and zoom");
     const errorCallback = vi.fn();
 
-    expect(zoomDemo && echartsOptionToChart2MusicConfig(zoomDemo.option, { errorCallback })).toBeNull();
-    expect(errorCallback).toHaveBeenCalledWith(expect.stringContaining("slider data zoom overlays are not supported"));
+    expect(zoomDemo && echartsOptionToChart2MusicConfig(zoomDemo.option, { errorCallback })).not.toBeNull();
+    expect(errorCallback).not.toHaveBeenCalled();
   });
 
   it.each(supportedExamples.map((example) => [chartName(example), example] as const))(
