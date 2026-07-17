@@ -28,6 +28,7 @@ export default meta;
 type Story = StoryObj<EChartsStoryOptions>;
 
 export const Smooth: Story = { name: "smooth", args: {"title":"line: smooth"}, render: (args) => createEChartsExample(getExample("line: smooth"), true, args) };
+export const TimeSeries: Story = { name: "time series", args: {"title":"line: time series"}, render: (args) => createEChartsExample(getExample("line: time series"), true, args) };
 export const MultipleSeries: Story = { name: "multiple series", args: {"title":"line: multiple series"}, render: (args) => createEChartsExample(getExample("line: multiple series"), true, args) };
 export const GapsAndJumps: Story = { name: "gaps and jumps", args: {"title":"line: gaps and jumps"}, render: (args) => createEChartsExample(getExample("line: gaps and jumps"), true, args) };
 export const Stepped: Story = { name: "stepped", args: {"title":"line: stepped"}, render: (args) => createEChartsExample(getExample("line: stepped"), true, args) };

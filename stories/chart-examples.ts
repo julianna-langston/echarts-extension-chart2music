@@ -58,6 +58,21 @@ export const optionsByType = [
         },
         {
           type: "line",
+          title: "line: time series",
+          option: {
+            tooltip: { trigger: "axis" },
+            grid: cartesianGrid,
+            xAxis: { type: "time", name: "Date" },
+            yAxis: { type: "value", name: "Visits" },
+            series: [{
+              name: "Visits",
+              type: "line",
+              data: [["2026-01-01", 12], ["2026-01-03", 19], ["2026-01-08", 15], ["2026-01-15", 24]]
+            }]
+          }
+        },
+        {
+          type: "line",
           title: "line: multiple series",
           option: {
             ...lineAxis,

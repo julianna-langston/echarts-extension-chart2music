@@ -356,6 +356,31 @@ const getAxisName = (
   return typeof name === "string" && name ? name : undefined;
 };
 
+const getAxisType = (
+  axis: Record<string, unknown> | Record<string, unknown>[] | undefined
+): string | undefined => {
+  const type = asArray(axis)[0]?.type;
+  return typeof type === "string" ? type : undefined;
+};
+
+const timeValue = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
+};
+
+const formatTimeValue = (value: number) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().slice(0, 10);
+};
+
 const getCategoryLabels = (option: Record<string, unknown>): string[] => {
   return getAxisCategoryLabels(option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined);
 };
@@ -1306,11 +1331,15 @@ export const echartsOptionToChart2MusicConfig = (
   const xAxisName = getAxisName(
     option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
   );
+  const isTimeXAxis = getAxisType(
+    option.xAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
+  ) === "time";
   const yAxisName = getAxisName(
     option.yAxis as Record<string, unknown> | Record<string, unknown>[] | undefined
   );
-  const categoryAxisName = xCategoryLabels.length ? xAxisName : yAxisName;
-  const valueAxisName = xCategoryLabels.length ? yAxisName : xAxisName;
+  const usesXAxis = xCategoryLabels.length > 0 || isTimeXAxis;
+  const categoryAxisName = usesXAxis ? xAxisName : yAxisName;
+  const valueAxisName = usesXAxis ? yAxisName : xAxisName;
   const pieLabels =
     inferredType === "pie" && indexes.length === 1
       ? getDataItemNameLabels(firstSelectedSeries)
@@ -1339,15 +1368,33 @@ export const echartsOptionToChart2MusicConfig = (
     }
 
     groups[seriesName(item ?? {}, seriesIndex)] = data
-      .map((raw, dataIndex) =>
-        readDataPoint(
+      .map((raw, dataIndex) => {
+        const point = readDataPoint(
           raw,
           dataIndex,
           seriesIndex,
           dataIndex,
           !shouldUseAxisLabelsForPointNames
-        )
-      )
+        );
+
+        if (!point || !isTimeXAxis) {
+          return point;
+        }
+
+        const rawX = Array.isArray(raw)
+          ? raw[0]
+          : raw && typeof raw === "object" && Array.isArray((raw as Record<string, unknown>).value)
+            ? ((raw as Record<string, unknown>).value as unknown[])[0]
+            : undefined;
+        const x = timeValue(rawX);
+
+        if (x === null) {
+          return null;
+        }
+
+        const { label: _label, ...timePoint } = point;
+        return { ...timePoint, x };
+      })
       .filter((point): point is EChartsMusicPoint => point !== null);
     groupTypes.push(
       echartsToC2MType[typeof item?.type === "string" ? item.type : "line"] ?? inferredType
@@ -1368,6 +1415,7 @@ export const echartsOptionToChart2MusicConfig = (
     x: {
       ...(labels.length ? { valueLabels: labels } : {}),
       ...(categoryAxisName ? { label: categoryAxisName } : {}),
+      ...(isTimeXAxis ? { continuous: true, format: formatTimeValue } : {}),
       ...options.axes?.x
     },
     y: {

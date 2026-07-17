@@ -167,6 +167,27 @@ describe("echartsOptionToChart2MusicConfig", () => {
     ]);
   });
 
+  it("converts time-series points to continuous timestamp data", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "time", name: "Date" },
+      yAxis: { type: "value", name: "Visits" },
+      series: [{
+        name: "Visits",
+        type: "line",
+        data: [["2026-01-01", 12], ["2026-01-03", 19]]
+      }]
+    });
+
+    expect(config?.axes?.x?.label).toBe("Date");
+    expect(config?.axes?.x?.continuous).toBe(true);
+    expect(config?.axes?.x?.format?.(Date.parse("2026-01-03"))).toBe("2026-01-03");
+    expect(config?.axes?.y?.label).toBe("Visits");
+    expect(config?.data).toEqual([
+      { x: Date.parse("2026-01-01"), y: 12, custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: Date.parse("2026-01-03"), y: 19, custom: { seriesIndex: 0, dataIndex: 1 } }
+    ]);
+  });
+
   it("converts multiple series into Chart2Music groups", () => {
     const config = echartsOptionToChart2MusicConfig({
       xAxis: { data: ["A", "B"] },
