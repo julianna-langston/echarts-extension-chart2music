@@ -79,14 +79,34 @@ chart.dispose();
 
 ## Supported ECharts Series
 
-The first release focuses on common data series:
+The Storybook gallery includes examples for every supported ECharts series:
 
-- `bar`
-- `line`
-- `pie`
-- `scatter`
+- `bar` (including grouped, stacked, range, horizontal, data-label, and bar-line charts; waterfall charts are not supported)
+- `line` (including time series, smooth, stepped, area, stacked-area, and marked lines)
+- `pie` (including doughnut, rose, nested, and stacked pies)
+- `scatter` and `effectScatter` (bubble plots are not supported)
+- `heatmap`
+- `boxplot`
+- `candlestick`
+- `funnel`
+- `sunburst`, `tree`, and `treemap`
 
-Unsupported visual-only ECharts features are ignored. Complex `dataset` / `encode` mappings, time axes, stacked charts, custom series, and interaction synchronization are good next targets.
+Unsupported visual-only ECharts features are ignored. Complex `dataset` / `encode` mappings and custom series are good next targets.
+
+### Time Series
+
+Use an ECharts time x-axis and provide each data point as `[date, value]`, where `date` is an ISO date string or a Unix timestamp in milliseconds. The extension passes timestamp values to Chart2Music as a continuous x-axis and formats them as ISO dates.
+
+```ts
+chart.setOption({
+  xAxis: { type: "time", name: "Date" },
+  yAxis: { type: "value", name: "Visits" },
+  series: [{
+    type: "line",
+    data: [["2026-01-01", 12], ["2026-01-03", 19]]
+  }]
+});
+```
 
 ## API
 
