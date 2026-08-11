@@ -102,30 +102,74 @@ const nodeValue = (node: Record<string, unknown>, fallbackLeafValue = 0): number
   return childTotal || fallbackLeafValue;
 };
 
+const itemValues = (raw: unknown): unknown[] | null => {
+  if (Array.isArray(raw)) {
+    return raw;
+  }
+  if (raw && typeof raw === "object" && Array.isArray((raw as Record<string, unknown>).value)) {
+    return (raw as Record<string, unknown>).value as unknown[];
+  }
+  return null;
+};
+
+// ECharts spells empty values and numbers as strings too, and neither names a
+// category.
+const NON_CATEGORY_STRINGS = new Set(["-", "NaN", "null", "undefined"]);
+
+const isCategoryKey = (value: unknown): boolean =>
+  typeof value === "string" &&
+  !NON_CATEGORY_STRINGS.has(value) &&
+  Number.isNaN(Number(value));
+
+// A chart with the value axis on x and the category axis on y puts the value in
+// dimension 0, so its items read [value, category] instead of [category, value].
+// Only a series whose every item has that shape counts: a lone [number, string]
+// item among ordinary pairs is far more likely to be an unreadable value than a
+// transposed one.
+const isValueFirstSeries = (data: unknown[]): boolean =>
+  data.length > 0 &&
+  data.every((raw) => {
+    const values = itemValues(raw);
+    return !!values && typeof values[0] === "number" && isCategoryKey(values[1]);
+  });
+
 const readDataPoint = (
   raw: unknown,
   fallbackX: number,
   seriesIndex: number,
   dataIndex: number,
-  includePointLabel = true
+  includePointLabel = true,
+  valueFirst = false
 ): EChartsMusicPoint | null => {
   let x = fallbackX;
   let label: string | undefined;
   let y: unknown = raw;
 
   if (Array.isArray(raw)) {
-    x = typeof raw[0] === "number" ? raw[0] : fallbackX;
-    label = typeof raw[0] === "string" ? raw[0] : label;
-    y = raw.length > 1 ? raw[1] : raw[0];
+    if (valueFirst) {
+      label = raw[1] as string;
+      y = raw[0];
+    } else {
+      x = typeof raw[0] === "number" ? raw[0] : fallbackX;
+      label = typeof raw[0] === "string" ? raw[0] : label;
+      y = raw.length > 1 ? raw[1] : raw[0];
+    }
   } else if (raw && typeof raw === "object") {
     const point = raw as Record<string, unknown>;
     if (typeof point.name === "string") {
       label = point.name;
     }
     if (Array.isArray(point.value)) {
-      x = typeof point.value[0] === "number" ? point.value[0] : x;
-      label = typeof point.value[0] === "string" ? point.value[0] : label;
-      y = point.value.length > 1 ? point.value[1] : point.value[0];
+      if (valueFirst) {
+        // An explicit name is what ECharts renders for the item, so prefer it
+        // over the category key repeated inside the pair.
+        label ??= point.value[1] as string;
+        y = point.value[0];
+      } else {
+        x = typeof point.value[0] === "number" ? point.value[0] : x;
+        label = typeof point.value[0] === "string" ? point.value[0] : label;
+        y = point.value.length > 1 ? point.value[1] : point.value[0];
+      }
     } else if ("value" in point) {
       y = point.value;
     }
@@ -798,8 +842,11 @@ const createCandlestickData = (
       return;
     }
 
+    const valueFirst = isValueFirstSeries(rawData);
     groups[seriesName(item ?? {}, seriesIndex)] = rawData
-      .map((raw, dataIndex) => readDataPoint(raw, dataIndex, seriesIndex, dataIndex))
+      .map((raw, dataIndex) =>
+        readDataPoint(raw, dataIndex, seriesIndex, dataIndex, true, valueFirst)
+      )
       .filter((point): point is EChartsMusicPoint => point !== null);
     types.push(item.type === "line" ? "line" : "bar");
   });
@@ -1338,6 +1385,7 @@ export const echartsOptionToChart2MusicConfig = (
       return;
     }
 
+    const valueFirst = isValueFirstSeries(data);
     groups[seriesName(item ?? {}, seriesIndex)] = data
       .map((raw, dataIndex) =>
         readDataPoint(
@@ -1345,7 +1393,8 @@ export const echartsOptionToChart2MusicConfig = (
           dataIndex,
           seriesIndex,
           dataIndex,
-          !shouldUseAxisLabelsForPointNames
+          !shouldUseAxisLabelsForPointNames,
+          valueFirst
         )
       )
       .filter((point): point is EChartsMusicPoint => point !== null);

@@ -167,6 +167,176 @@ describe("echartsOptionToChart2MusicConfig", () => {
     ]);
   });
 
+  it("reads horizontal bar pairs that put the value first", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "value", name: "kWh" },
+      yAxis: { type: "category", name: "Device", data: ["Dishwasher", "Oven"] },
+      series: [
+        {
+          type: "bar",
+          data: [
+            [12.5, "Dishwasher"],
+            [7.25, "Oven"]
+          ]
+        }
+      ]
+    });
+
+    expect(config?.data).toEqual([
+      { x: 0, y: 12.5, label: "Dishwasher", custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: 1, y: 7.25, label: "Oven", custom: { seriesIndex: 0, dataIndex: 1 } }
+    ]);
+    expect(config?.axes?.x?.valueLabels).toEqual(["Dishwasher", "Oven"]);
+    expect(config?.axes?.x?.label).toBe("Device");
+    expect(config?.axes?.y?.label).toBe("kWh");
+  });
+
+  it("reads value-first pairs from data item objects", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "value" },
+      yAxis: { type: "category", data: ["Dishwasher", "Oven"] },
+      series: [
+        {
+          type: "bar",
+          data: [
+            { name: "Dishwasher", value: [12.5, "Dishwasher"] },
+            { name: "Oven", value: [7.25, "Oven"] }
+          ]
+        }
+      ]
+    });
+
+    expect(config?.data).toEqual([
+      { x: 0, y: 12.5, label: "Dishwasher", custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: 1, y: 7.25, label: "Oven", custom: { seriesIndex: 0, dataIndex: 1 } }
+    ]);
+  });
+
+  it("keeps the item name when a value-first pair repeats the category key", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "value" },
+      yAxis: { type: "category", data: ["sensor.a", "sensor.b"] },
+      series: [
+        {
+          type: "bar",
+          data: [
+            { name: "Dishwasher", value: [12.5, "sensor.a"] },
+            { name: "Oven", value: [7.25, "sensor.b"] }
+          ]
+        }
+      ]
+    });
+
+    expect(config?.data).toEqual([
+      { x: 0, y: 12.5, label: "Dishwasher", custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: 1, y: 7.25, label: "Oven", custom: { seriesIndex: 0, dataIndex: 1 } }
+    ]);
+  });
+
+  it("reads value-first pairs from pie slices, which have no axes to read", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      series: [
+        {
+          type: "pie",
+          data: [
+            { name: "Dishwasher", value: [12.5, "sensor.a"] },
+            { name: "Oven", value: [7.25, "sensor.b"] }
+          ]
+        }
+      ]
+    });
+
+    expect(config?.data).toEqual([
+      { x: 0, y: 12.5, custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: 1, y: 7.25, custom: { seriesIndex: 0, dataIndex: 1 } }
+    ]);
+    expect(config?.axes?.x?.valueLabels).toEqual(["Dishwasher", "Oven"]);
+  });
+
+  it("gates the value-first reading on the whole series, so empty values stay gaps", () => {
+    const config = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "time" },
+      series: [
+        {
+          type: "line",
+          data: [
+            [1700000000000, 21.5],
+            [1700003600000, "-"],
+            [1700007200000, 22.1]
+          ]
+        }
+      ]
+    });
+
+    expect(config?.data).toEqual([
+      { x: 1700000000000, y: 21.5, custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: 1700007200000, y: 22.1, custom: { seriesIndex: 0, dataIndex: 2 } }
+    ]);
+  });
+
+  it("does not read numeric strings or empty markers as category keys", () => {
+    const numericStrings = echartsOptionToChart2MusicConfig({
+      series: [
+        {
+          type: "scatter",
+          data: [
+            [1, "8"],
+            [2, "12"]
+          ]
+        }
+      ]
+    });
+    const allGaps = echartsOptionToChart2MusicConfig({
+      series: [
+        {
+          type: "line",
+          data: [
+            [1, "-"],
+            [2, "-"]
+          ]
+        }
+      ]
+    });
+
+    expect(numericStrings?.data).toEqual([]);
+    expect(allGaps?.data).toEqual([]);
+  });
+
+  it("keeps reading category-first and numeric pairs unchanged", () => {
+    const categoryFirst = echartsOptionToChart2MusicConfig({
+      xAxis: { type: "category", data: ["Jan", "Feb"] },
+      series: [
+        {
+          type: "line",
+          data: [
+            ["Jan", 5],
+            ["Feb", 9]
+          ]
+        }
+      ]
+    });
+    const numeric = echartsOptionToChart2MusicConfig({
+      series: [
+        {
+          type: "scatter",
+          data: [
+            [1, 8],
+            [2, 12]
+          ]
+        }
+      ]
+    });
+
+    expect(categoryFirst?.data).toEqual([
+      { x: 0, y: 5, label: "Jan", custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: 1, y: 9, label: "Feb", custom: { seriesIndex: 0, dataIndex: 1 } }
+    ]);
+    expect(numeric?.data).toEqual([
+      { x: 1, y: 8, custom: { seriesIndex: 0, dataIndex: 0 } },
+      { x: 2, y: 12, custom: { seriesIndex: 0, dataIndex: 1 } }
+    ]);
+  });
+
   it("converts multiple series into Chart2Music groups", () => {
     const config = echartsOptionToChart2MusicConfig({
       xAxis: { data: ["A", "B"] },
