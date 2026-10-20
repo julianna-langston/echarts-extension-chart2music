@@ -55,13 +55,13 @@
     "chart2music": "^1.20.0"
   },
   "devDependencies": {
-    "@storybook/html-vite": "10.6.1",
+    "@storybook/html-vite": "10.6.2",
     "@types/node": "^24.19.2",
-    "@vitest/coverage-v8": "5.0.3",
+    "@vitest/coverage-v8": "5.0.5",
     "echarts": "^6.1.0",
-    "storybook": "10.6.1",
+    "storybook": "10.6.2",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   },
   "publishConfig": {
     "access": "public"
