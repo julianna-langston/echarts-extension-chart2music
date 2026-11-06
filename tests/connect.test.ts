@@ -196,6 +196,73 @@ describe("connect", () => {
     expect(chart2MusicMock.c2m.setData).not.toHaveBeenCalled();
   });
 
+  it("clears the old series highlight before reusing a point key after an update", () => {
+    const option = {
+      xAxis: { data: ["A", "B"] },
+      series: [{ name: "Fixture", type: "line", data: [1, 2] }]
+    };
+    const chart = makeChart(option);
+    chart2MusicMock.c2m.getCurrent.mockReturnValue({
+      group: "Fixture",
+      point: { custom: { seriesIndex: 0, dataIndex: 1 } }
+    });
+    const connection = connect(chart as unknown as Parameters<typeof connect>[0], { cc: makeElement() });
+    const config = chart2MusicMock.c2mChart.mock.calls[0]?.[0] as {
+      options?: { onFocusCallback?: () => void };
+    };
+    config.options?.onFocusCallback?.();
+    chart.dispatchAction.mockClear();
+
+    // Dispatching cleanup can synchronously trigger another finished/update event.
+    chart.dispatchAction.mockImplementation(() => connection?.update());
+    option.series[0]!.data = [3, 5];
+    connection?.update();
+    expect(chart2MusicMock.c2m.setData).toHaveBeenCalledTimes(1);
+    expect(chart.dispatchAction.mock.calls).toEqual([
+      [{ type: "downplay", seriesIndex: 0 }, { silent: true }],
+      [{ type: "hideTip" }, { silent: true }]
+    ]);
+
+    chart.dispatchAction.mockClear();
+    config.options?.onFocusCallback?.();
+    config.options?.onFocusCallback?.();
+    expect(chart.dispatchAction.mock.calls).toEqual([
+      [{ type: "downplay", seriesIndex: 0 }],
+      [{ type: "highlight", seriesIndex: 0, dataIndex: 1 }],
+      [{ type: "showTip", seriesIndex: 0, dataIndex: 1 }]
+    ]);
+  });
+
+  it("keeps the highlight cache when data is unchanged or an update cannot be converted", () => {
+    const option = { series: [{ type: "pie", data: [1, 2] }] };
+    const chart = makeChart(option);
+    chart2MusicMock.c2m.getCurrent.mockReturnValue({
+      group: "Series 1",
+      point: { custom: { seriesIndex: 0, dataIndex: 1 } }
+    });
+    const connection = connect(chart as unknown as Parameters<typeof connect>[0], { cc: makeElement() });
+    const config = chart2MusicMock.c2mChart.mock.calls[0]?.[0] as {
+      options?: { onFocusCallback?: () => void };
+    };
+    config.options?.onFocusCallback?.();
+    chart.dispatchAction.mockClear();
+
+    connection?.update();
+    config.options?.onFocusCallback?.();
+    option.series[0]!.type = "radar";
+    connection?.update();
+    config.options?.onFocusCallback?.();
+    expect(chart.dispatchAction).not.toHaveBeenCalled();
+    expect(chart2MusicMock.c2m.setData).not.toHaveBeenCalled();
+
+    connection?.dispose();
+    option.series[0]!.type = "pie";
+    option.series[0]!.data = [3, 4];
+    connection?.update();
+    expect(chart.dispatchAction).not.toHaveBeenCalled();
+    expect(chart2MusicMock.c2m.setData).not.toHaveBeenCalled();
+  });
+
   it("reports Chart2Music initialization errors without attaching ECharts listeners", () => {
     const errorCallback = vi.fn();
     chart2MusicMock.c2mChart.mockReturnValueOnce({

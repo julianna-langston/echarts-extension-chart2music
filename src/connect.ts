@@ -295,6 +295,13 @@ export const createEChartsMusic = (
       if (nextConfig) {
         data.setData(nextConfig.data, nextConfig.axes);
         lastDataSnapshot = nextDataSnapshot;
+        const previousHighlight = lastHighlightedPoint;
+        lastHighlightedPoint = undefined;
+        if (previousHighlight) {
+          // Data updates can move the emphasized item away from its old index.
+          chart.dispatchAction({ type: "downplay", seriesIndex: previousHighlight.seriesIndex }, { silent: true });
+          chart.dispatchAction({ type: "hideTip" }, { silent: true });
+        }
       }
     },
     dispose: () => {
